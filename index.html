@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Viral Creator Editor Pro - Multi-Layer & Brand Kit</title>
+
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none';
+                 style-src  'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com;
+                 script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com;
+                 font-src   https://fonts.gstatic.com;
+                 img-src    'self' data: blob:;
+                 connect-src 'self';">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --canvas-w: 360px;
+      --canvas-h: 640px;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      overscroll-behavior-y: contain;
+    }
+    .safe-zone-overlay {
+      pointer-events: none;
+      outline: 2px dashed rgba(255, 255, 255, .4);
+      box-shadow: inset 60px 80px 60px 80px rgba(255, 255, 255, .1);
+    }
+    .resize-handle {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      right: -7px; 
+      bottom: -7px;
+      background: #fff;
+      border-radius: 50%;
+      cursor: nwse-resize;
+      z-index: 60; /* Relative to its layer element */
+      touch-action: none;
+    }
+    .control-group button { flex: 1; }
+
+    .layer-item {
+      padding: 0.5rem;
+      border: 1px solid #4A5568; /* gray-700 */
+      border-radius: 0.25rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      background-color: #2D3748; /* gray-800 */
+      transition: background-color 0.2s;
+      display: flex; /* For aligning name and controls */
+      justify-content: space-between; /* For aligning name and controls */
+      align-items: center; /* For aligning name and controls */
+    }
+    .layer-item.selected {
+      background-color: #4299e1; /* blue-500 */
+      border-color: #63b3ed; /* blue-400 */
+    }
+    .layer-item:hover {
+      background-color: #4A5568; /* gray-700 */
+    }
+    .layer-name { /* Flex grow for layer name */
+        flex-grow: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-right: 8px; /* Space before buttons */
+    }
+    .layer-controls { display: flex; align-items: center; gap: 0.25rem; /* gap for buttons */ }
+    .layer-controls button { background: none; border: none; color: white; cursor: pointer; padding: 0.25rem; font-size: 0.875rem; /* Smaller buttons */ }
+
+    .draggable-layer {
+      position: absolute;
+      cursor: move;
+      touch-action: none; /* For mobile dragging */
+      box-sizing: border-box; /* Important for width/height calculations */
+    }
+    .draggable-layer.selected-on-canvas {
+        outline: 2px dashed #4299e1; /* blue-500 - Highlight selected layer on canvas */
+    }
+     .draggable-layer img { /* Ensure img inside layer doesn't interfere with wrapper's events */
+        pointer-events: none;
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Default, can be changed by layer prop */
+    }
+    .brand-logo-watermark {
+        position: absolute;
+        pointer-events: none; /* Non-interactive */
+        opacity: 0.7; /* Default, can be adjusted */
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-900 text-white flex flex-col lg:flex-row gap-6 p-4">
+
+<aside class="w-full max-w-sm space-y-6">
+  <section class="space-y-2">
+    <h2 class="text-lg font-bold tracking-wide">Brand Kit</h2>
+    <div class="flex items-center gap-2">
+        <label class="flex-1">Brand Color</label><input type="color" id="brandColorCtrl" value="#FF00FF" class="h-8 w-16">
+    </div>
+    <div>
+        <label class="text-sm">Logo Watermark</label>
+        <input type="file" id="brandLogoUploadCtrl" accept="image/png, image/jpeg, image/svg+xml" class="w-full text-sm file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600">
+        <button id="clearBrandLogoCtrl" class="text-xs text-red-400 hover:text-red-300 mt-1">Clear Logo</button>
+    </div>
+     <div class="flex items-center gap-2">
+      <label class="flex-1 text-sm">Logo Opacity</label><input type="range" id="brandLogoOpacityCtrl" min="0" max="1" step="0.05" value="0.7" class="flex-[2]">
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="flex-1 text-sm">Logo Size (%)</label><input type="range" id="brandLogoSizeCtrl" min="5" max="50" step="1" value="15" class="flex-[2]">
+    </div>
+    <select id="brandLogoPositionCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
+        <option value="bottom-right">Bottom Right</option>
+        <option value="bottom-left">Bottom Left</option>
+        <option value="top-right">Top Right</option>
+        <option value="top-left">Top Left</option>
+        <option value="center">Center</option>
+    </select>
+  </section>
+
+  <section class="space-y-2">
+    <h2 class="text-lg font-bold tracking-wide">Layers</h2>
+    <div id="layerPanel" class="max-h-60 overflow-y-auto bg-gray-800 p-2 rounded">
+        </div>
+    <div class="flex gap-2">
+        <button id="addTextLayerBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm transition">Add Text</button>
+        <button id="addImageLayerBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded text-sm transition">Add Image</button>
+    </div>
+  </section>
+  
+  <section id="selectedLayerControlsSection" class="space-y-2 hidden">
+    <h2 class="text-lg font-bold tracking-wide">Edit Layer: <span id="selectedLayerName" class="font-normal"></span></h2>
+    <div class="flex items-center gap-2">
+        <label class="flex-1 text-sm">Layer Name</label>
+        <input type="text" id="layerNameInputCtrl" class="flex-[2] bg-gray-800 rounded p-1 text-sm">
+    </div>
+    <div class="flex items-center gap-2 control-group">
+        <button id="centerLayerBtn" class="bg-sky-600 hover:bg-sky-700 text-white py-1 px-3 rounded text-sm transition">Center Layer</button>
+    </div>
+    <div id="textLayerControls" class="space-y-2 hidden">
+        <textarea id="layerTextInput" rows="2" class="w-full rounded p-2 text-black text-sm" placeholder="Enter text..."></textarea>
+        <div class="flex items-center gap-2"><label class="flex-1 text-sm">Size</label><input type="range" min="10" max="200" value="32" id="layerTextSize" class="flex-[2]"></div>
+        <div class="flex items-center gap-2"><label class="flex-1 text-sm">Color</label><input type="color" id="layerTextColor" value="#ffffff" class="h-8 w-16"></div>
+        <select id="layerTextFont" class="w-full bg-gray-800 rounded p-2 text-sm">
+            <option value="'Anton', sans-serif">Anton</option>
+            <option value="'Bangers', cursive">Bangers</option>
+            <option value="'Inter', sans-serif">Inter</option>
+        </select>
+        <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="layerTextShadow" class="accent-emerald-500"> Shadow</label>
+    </div>
+    <div id="imageLayerControls" class="space-y-2 hidden">
+        <label class="text-sm">Replace Image</label>
+        <input type="file" id="layerImageUpload" accept="image/*" class="w-full text-sm file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600">
+        <div class="flex items-center gap-2"><label class="flex-1 text-sm">Opacity</label><input type="range" id="layerImageOpacity" min="0" max="1" step="0.05" value="1" class="flex-[2]"></div>
+    </div>
+  </section>
+
+  <section class="space-y-2">
+    <h2 class="text-lg font-bold tracking-wide">Background</h2>
+    <div class="flex items-center gap-2">
+      <label class="flex-1 text-sm">Top</label><input type="color" id="bgTopColorCtrl" value="#ffcc00" class="h-8 w-16">
+      <label class="flex-1 text-sm">Bottom</label><input type="color" id="bgBottomColorCtrl" value="#ff6600" class="h-8 w-16">
+    </div>
+    <select id="bgOrientationCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
+      <option value="to-b">Vertical</option><option value="to-r">Horizontal</option>
+      <option value="to-tr">Diagonal ↗︎</option><option value="to-br">Diagonal ↘︎</option>
+    </select>
+  </section>
+
+  <section class="space-y-2">
+    <h2 class="text-lg font-bold tracking-wide">Canvas</h2>
+    <select id="canvasPresetCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
+      <option value="360x640">Phone Preview (360×640)</option>
+      <option value="1080x1920">YouTube Short (1080×1920)</option>
+      <option value="1080x1080">Square (1080×1080)</option>
+    </select>
+    <label class="inline-flex items-center gap-2 text-sm">
+      <input type="checkbox" id="safeZoneToggleCtrl" checked class="accent-emerald-500"><span>Show Safe Zone</span>
+    </label>
+    <button id="exportPngBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded shadow transition">Export PNG</button>
+  </section>
+</aside>
+
+<main class="flex-1 flex justify-center items-start pt-4 lg:pt-0">
+  <div id="canvasWrapper" class="relative border border-white rounded overflow-hidden shadow-lg bg-gray-700"
+       style="width:var(--canvas-w); height:var(--canvas-h)">
+    <div id="canvasElement" class="w-full h-full select-none relative overflow-hidden">
+      <div id="safeZoneElement" class="absolute inset-0 safe-zone-overlay hidden"></div>
+      <img id="brandLogoWatermarkElement" class="brand-logo-watermark hidden" alt="Brand Logo">
+    </div>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+(function() {
+    // --- DOM Element Selectors ---
+    const getEl = id => document.getElementById(id);
+
+    const canvasWrapper = getEl('canvasWrapper');
+    const canvasElement = getEl('canvasElement'); 
+    const safeZoneElement = getEl('safeZoneElement');
+    const brandLogoWatermarkElement = getEl('brandLogoWatermarkElement');
+
+    const brandColorCtrl = getEl('brandColorCtrl');
+    const brandLogoUploadCtrl = getEl('brandLogoUploadCtrl');
+    const clearBrandLogoCtrl = getEl('clearBrandLogoCtrl');
+    const brandLogoOpacityCtrl = getEl('brandLogoOpacityCtrl');
+    const brandLogoSizeCtrl = getEl('brandLogoSizeCtrl');
+    const brandLogoPositionCtrl = getEl('brandLogoPositionCtrl');
+
+    const layerPanel = getEl('layerPanel');
+    const addTextLayerBtn = getEl('addTextLayerBtn');
+    const addImageLayerBtn = getEl('addImageLayerBtn');
+    
+    const selectedLayerControlsSection = getEl('selectedLayerControlsSection');
+    const selectedLayerName = getEl('selectedLayerName');
+    const layerNameInputCtrl = getEl('layerNameInputCtrl');
+    const centerLayerBtn = getEl('centerLayerBtn');
+    const textLayerControls = getEl('textLayerControls');
+    const layerTextInput = getEl('layerTextInput');
+    const layerTextSize = getEl('layerTextSize');
+    const layerTextColor = getEl('layerTextColor');
+    const layerTextFont = getEl('layerTextFont');
+    const layerTextShadow = getEl('layerTextShadow');
+    const imageLayerControls = getEl('imageLayerControls');
+    const layerImageUpload = getEl('layerImageUpload');
+    const layerImageOpacity = getEl('layerImageOpacity');
+
+    const bgTopColorCtrl = getEl('bgTopColorCtrl');
+    const bgBottomColorCtrl = getEl('bgBottomColorCtrl');
+    const bgOrientationCtrl = getEl('bgOrientationCtrl');
+    const canvasPresetCtrl = getEl('canvasPresetCtrl');
+    const safeZoneToggleCtrl = getEl('safeZoneToggleCtrl');
+    const exportPngBtn = getEl('exportPngBtn');
+
+    const APP_STORAGE_KEY = 'viralCreatorProState_v3_layers_kit';
+    let appState = {};
+
+    const defaultState = {
+        brandKit: {
+            brandColor: '#00A0D2',
+            logoSrc: null,
+            logoOpacity: 0.7,
+            logoSize: 15, 
+            logoPosition: 'bottom-right',
+        },
+        layers: [], 
+        selectedLayerId: null,
+        globalSettings: {
+            bgTopColor: '#1a202c', 
+            bgBottomColor: '#2d3748',
+            bgOrientation: 'to-b',
+            canvasPreset: '360x640',
+            safeZoneToggle: true,
+        }
+    };
+    
+    let layerIdCounter = 0;
+
+    function loadState() {
+        try {
+            const storedState = localStorage.getItem(APP_STORAGE_KEY);
+            if (storedState) {
+                 const parsedState = JSON.parse(storedState);
+                 appState = { 
+                    ...defaultState, 
+                    ...parsedState,
+                    brandKit: { ...defaultState.brandKit, ...(parsedState.brandKit || {}) },
+                    globalSettings: { ...defaultState.globalSettings, ...(parsedState.globalSettings || {}) },
+                    layers: parsedState.layers || [] // Ensure layers is an array
+                };
+                if (appState.layers && appState.layers.length > 0) {
+                    const maxId = appState.layers.reduce((max, layer) => {
+                        const idNum = layer.id ? parseInt(layer.id.split('-')[1]) : 0;
+                        return idNum > max ? idNum : max;
+                    }, 0);
+                    layerIdCounter = maxId;
+                } else {
+                    layerIdCounter = 0;
+                }
+
+            } else {
+                appState = JSON.parse(JSON.stringify(defaultState)); 
+            }
+        } catch (e) {
+            console.error("Failed to load state from localStorage:", e);
+            appState = JSON.parse(JSON.stringify(defaultState));
+        }
+    }
+
+    function saveState() {
+        try {
+            localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
+        } catch (e) {
+            console.error("Failed to save state to localStorage:", e);
+        }
+    }
+    
+    function getSelectedLayer() {
+        if (!appState.selectedLayerId) return null;
+        return appState.layers.find(l => l.id === appState.selectedLayerId);
+    }
+
+    const layerElements = new Map(); 
+
+    function createLayerElement(layer) {
+        const el = document.createElement('div');
+        el.id = `canvas-layer-${layer.id}`;
+        el.classList.add('draggable-layer');
+        el.style.zIndex = layer.zIndex;
+        el.style.left = layer.left || '10px';
+        el.style.top = layer.top || '10px';
+        el.style.visibility = layer.visible ? 'visible' : 'hidden';
+
+        if (layer.type === 'text') {
+            el.style.fontFamily = layer.fontFamily;
+            el.style.fontSize = `${layer.fontSize}px`;
+            el.style.color = layer.color;
+            el.style.textShadow = layer.textShadowEnabled ? '2px 2px 4px rgba(0,0,0,.6)' : 'none';
+            el.textContent = layer.text;
+            el.style.whiteSpace = 'pre-wrap'; 
+            el.style.padding = '5px'; // Padding for text layers for better visual
+            el.style.width = layer.width || 'auto'; 
+            el.style.height = layer.height || 'auto';
+        } else if (layer.type === 'image') {
+            const img = document.createElement('img');
+            img.src = layer.imageSrc || '';
+            img.alt = layer.name || 'Image Layer';
+            el.appendChild(img);
+            el.style.width = layer.width || '100px';
+            el.style.height = layer.height || '100px';
+            el.style.opacity = layer.opacity;
+        }
+        
+        canvasElement.appendChild(el);
+        layerElements.set(layer.id, el);
+        makeDraggable(el, layer); // Make the new element draggable
+        return el;
+    }
+
+    function updateLayerElement(layer) {
+        const el = layerElements.get(layer.id);
+        if (!el) return createLayerElement(layer);
+
+        el.style.left = layer.left;
+        el.style.top = layer.top;
+        el.style.zIndex = layer.zIndex;
+        el.style.visibility = layer.visible ? 'visible' : 'hidden';
+        
+        if (layer.id === appState.selectedLayerId) {
+            el.classList.add('selected-on-canvas');
+        } else {
+            el.classList.remove('selected-on-canvas');
+        }
+
+        if (layer.type === 'text') {
+            el.style.fontFamily = layer.fontFamily;
+            el.style.fontSize = `${layer.fontSize}px`;
+            el.style.color = layer.color;
+            el.style.textShadow = layer.textShadowEnabled ? '2px 2px 4px rgba(0,0,0,.6)' : 'none';
+            el.textContent = layer.text;
+            el.style.width = layer.width || 'auto';
+            el.style.height = layer.height || 'auto';
+        } else if (layer.type === 'image') {
+            const img = el.querySelector('img');
+            if(img) img.src = layer.imageSrc || '';
+            el.style.width = layer.width;
+            el.style.height = layer.height;
+            el.style.opacity = layer.opacity;
+        }
+    }
+    
+    function removeLayerElement(layerId) {
+        const el = layerElements.get(layerId);
+        if (el) {
+            el.remove();
+            layerElements.delete(layerId);
+        }
+    }
+
+    function renderAllLayersOnCanvas() {
+        Array.from(canvasElement.children).forEach(child => {
+            if (child.classList.contains('draggable-layer')) child.remove();
+        });
+        layerElements.clear();
+        appState.layers.forEach(layer => createLayerElement(layer));
+        updateSelectedLayerHighlight();
+    }
+    
+    function updateSelectedLayerHighlight() {
+        layerElements.forEach((el, id) => {
+            el.classList.toggle('selected-on-canvas', id === appState.selectedLayerId);
+        });
+    }
+
+    function renderLayerPanel() {
+        layerPanel.innerHTML = '';
+        [...appState.layers].reverse().forEach(layer => {
+            const item = document.createElement('div');
+            item.classList.add('layer-item');
+            item.classList.toggle('selected', layer.id === appState.selectedLayerId);
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('layer-name');
+            nameSpan.textContent = layer.name || `Layer ${layer.id.split('-')[1]}`;
+            nameSpan.title = `Type: ${layer.type} (ID: ${layer.id})`;
+            item.appendChild(nameSpan);
+
+            item.draggable = true;
+            item.addEventListener('click', () => selectLayer(layer.id));
+            item.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', layer.id));
+            
+            const controlsDiv = document.createElement('div');
+            controlsDiv.classList.add('layer-controls');
+            
+            const visibilityBtn = document.createElement('button');
+            visibilityBtn.innerHTML = layer.visible ? '👁️' : '🙈';
+            visibilityBtn.title = layer.visible ? 'Hide' : 'Show';
+            visibilityBtn.onclick = (e) => { e.stopPropagation(); toggleLayerVisibility(layer.id); };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.title = 'Delete';
+            deleteBtn.onclick = (e) => { e.stopPropagation(); deleteLayer(layer.id); };
+            
+            controlsDiv.appendChild(visibilityBtn);
+            controlsDiv.appendChild(deleteBtn);
+            item.appendChild(controlsDiv);
+            layerPanel.appendChild(item);
+        });
+        
+        layerPanel.ondragover = (e) => e.preventDefault();
+        layerPanel.ondrop = (e) => {
+            e.preventDefault();
+            const droppedLayerId = e.dataTransfer.getData('text/plain');
+            const targetItem = e.target.closest('.layer-item');
+            if (targetItem) {
+                const targetName = targetItem.querySelector('.layer-name').textContent;
+                const targetLayer = appState.layers.find(l => (l.name || `Layer ${l.id.split('-')[1]}`) === targetName);
+                 if (targetLayer && droppedLayerId !== targetLayer.id) {
+                    moveLayer(droppedLayerId, targetLayer.id);
+                }
+            }
+        };
+    }
+    
+    function moveLayer(sourceId, targetIdBefore) {
+        const sourceIndex = appState.layers.findIndex(l => l.id === sourceId);
+        if (sourceIndex === -1) return;
+
+        const [movedLayer] = appState.layers.splice(sourceIndex, 1);
+        
+        const targetIndexBefore = appState.layers.findIndex(l => l.id === targetIdBefore);
+        
+        // If targetIdBefore is not found, or source was before target, logic might need adjustment
+        // This simple splice inserts before the targetId's new position if it moved.
+        // The important part is that layers array order dictates z-index.
+        // We want to insert the movedLayer *above* the target in visual stack (higher index in reversed list)
+        // which means *before* it in the normal list if targetIndexBefore is where we want to place it
+        // If the panel is reversed, "dropping on X" means X will be below the dropped item.
+        // So, insert `movedLayer` at the index of `targetIdBefore`.
+        if (targetIndexBefore !== -1) {
+            appState.layers.splice(targetIndexBefore, 0, movedLayer);
+        } else { // Dropped in empty space or weird target, append to top (which is end of array)
+            appState.layers.push(movedLayer);
+        }
+        
+        updateZIndices();
+        renderLayerPanel();
+        renderAllLayersOnCanvas();
+        saveState();
+    }
+
+    function updateZIndices() {
+        appState.layers.forEach((layer, index) => {
+            layer.zIndex = index + 1; 
+        });
+    }
+
+    function updateSelectedLayerControls() {
+        const layer = getSelectedLayer();
+        if (!layer) {
+            selectedLayerControlsSection.classList.add('hidden');
+            return;
+        }
+        selectedLayerControlsSection.classList.remove('hidden');
+        selectedLayerName.textContent = layer.name || `Layer ${layer.id.split('-')[1]}`;
+        layerNameInputCtrl.value = layer.name || '';
+
+        textLayerControls.classList.add('hidden');
+        imageLayerControls.classList.add('hidden');
+
+        if (layer.type === 'text') {
+            textLayerControls.classList.remove('hidden');
+            layerTextInput.value = layer.text;
+            layerTextSize.value = layer.fontSize;
+            layerTextColor.value = layer.color;
+            layerTextFont.value = layer.fontFamily;
+            layerTextShadow.checked = layer.textShadowEnabled;
+        } else if (layer.type === 'image') {
+            imageLayerControls.classList.remove('hidden');
+            layerImageOpacity.value = layer.opacity;
+        }
+    }
+
+    function updateGlobalControlsDisplay() {
+        bgTopColorCtrl.value = appState.globalSettings.bgTopColor;
+        bgBottomColorCtrl.value = appState.globalSettings.bgBottomColor;
+        bgOrientationCtrl.value = appState.globalSettings.bgOrientation;
+        canvasPresetCtrl.value = appState.globalSettings.canvasPreset;
+        safeZoneToggleCtrl.checked = appState.globalSettings.safeZoneToggle;
+        updateBackgroundDisplay();
+        updateCanvasDimensions(); // This also calls renderBrandLogoWatermark
+        toggleSafeZoneVisibility();
+    }
+    
+    function updateBrandKitDisplay() {
+        brandColorCtrl.value = appState.brandKit.brandColor;
+        brandLogoOpacityCtrl.value = appState.brandKit.logoOpacity;
+        brandLogoSizeCtrl.value = appState.brandKit.logoSize;
+        brandLogoPositionCtrl.value = appState.brandKit.logoPosition;
+        renderBrandLogoWatermark();
+    }
+
+    function renderBrandLogoWatermark() {
+        if (appState.brandKit.logoSrc && canvasElement.offsetWidth > 0 && canvasElement.offsetHeight > 0) {
+            brandLogoWatermarkElement.src = appState.brandKit.logoSrc;
+            brandLogoWatermarkElement.classList.remove('hidden');
+            brandLogoWatermarkElement.style.opacity = appState.brandKit.logoOpacity;
+            
+            const canvasWidth = canvasElement.offsetWidth;
+            const canvasHeight = canvasElement.offsetHeight; // For centering vertical
+            const logoSizePercent = appState.brandKit.logoSize / 100;
+            const logoPixelWidth = canvasWidth * logoSizePercent;
+            
+            brandLogoWatermarkElement.style.width = `${logoPixelWidth}px`;
+            brandLogoWatermarkElement.style.height = 'auto';
+
+            const margin = 10; 
+            // Need to ensure image is loaded to get its actual height for precise centering.
+            const tempImgForDimensions = new Image();
+            tempImgForDimensions.onload = () => {
+                const logoNaturalWidth = tempImgForDimensions.naturalWidth;
+                const logoNaturalHeight = tempImgForDimensions.naturalHeight;
+                const logoPixelHeight = (logoNaturalHeight / logoNaturalWidth) * logoPixelWidth;
+
+                switch (appState.brandKit.logoPosition) {
+                    case 'bottom-right':
+                        brandLogoWatermarkElement.style.top = 'auto'; brandLogoWatermarkElement.style.left = 'auto';
+                        brandLogoWatermarkElement.style.bottom = `${margin}px`; brandLogoWatermarkElement.style.right = `${margin}px`;
+                        break;
+                    case 'bottom-left':
+                        brandLogoWatermarkElement.style.top = 'auto'; brandLogoWatermarkElement.style.right = 'auto';
+                        brandLogoWatermarkElement.style.bottom = `${margin}px`; brandLogoWatermarkElement.style.left = `${margin}px`;
+                        break;
+                    case 'top-right':
+                        brandLogoWatermarkElement.style.bottom = 'auto'; brandLogoWatermarkElement.style.left = 'auto';
+                        brandLogoWatermarkElement.style.top = `${margin}px`; brandLogoWatermarkElement.style.right = `${margin}px`;
+                        break;
+                    case 'top-left':
+                        brandLogoWatermarkElement.style.bottom = 'auto'; brandLogoWatermarkElement.style.right = 'auto';
+                        brandLogoWatermarkElement.style.top = `${margin}px`; brandLogoWatermarkElement.style.left = `${margin}px`;
+                        break;
+                    case 'center':
+                        brandLogoWatermarkElement.style.right = 'auto'; brandLogoWatermarkElement.style.bottom = 'auto';
+                        brandLogoWatermarkElement.style.top = `calc(50% - ${logoPixelHeight / 2}px)`;
+                        brandLogoWatermarkElement.style.left = `calc(50% - ${logoPixelWidth / 2}px)`;
+                        break;
+                }
+            }
+            tempImgForDimensions.src = appState.brandKit.logoSrc;
+
+
+        } else {
+            brandLogoWatermarkElement.classList.add('hidden');
+            brandLogoWatermarkElement.src = '';
+        }
+    }
+
+    function updateBackgroundDisplay() {
+        const gs = appState.globalSettings;
+        const orientation = gs.bgOrientation.replace('to-', 'to ');
+        canvasElement.style.backgroundImage = `linear-gradient(${orientation}, ${gs.bgTopColor}, ${gs.bgBottomColor})`;
+    }
+
+    function updateCanvasDimensions() {
+        const gs = appState.globalSettings;
+        const [w, h] = gs.canvasPreset.split('x');
+        document.documentElement.style.setProperty('--canvas-w', `${w}px`);
+        document.documentElement.style.setProperty('--canvas-h', `${h}px`);
+        // Call after a brief timeout to allow DOM to update canvas size
+        setTimeout(renderBrandLogoWatermark, 50); 
+    }
+
+    function toggleSafeZoneVisibility() {
+        safeZoneElement.style.display = appState.globalSettings.safeZoneToggle ? 'block' : 'none';
+    }
+    
+    function addNewLayer(type) {
+        layerIdCounter++;
+        const newLayerBase = {
+            id: `l-${layerIdCounter}`,
+            visible: true,
+            zIndex: appState.layers.length + 1,
+            left: `${Math.random() * 30 + 10}px`, // Random initial position
+            top: `${Math.random() * 50 + 20}px`,
+        };
+
+        let newLayer;
+        if (type === 'text') {
+            newLayer = {
+                ...newLayerBase,
+                type: 'text',
+                name: `Text ${layerIdCounter}`,
+                text: 'New Text',
+                fontSize: 32,
+                color: appState.brandKit.brandColor, 
+                fontFamily: "'Inter', sans-serif",
+                textShadowEnabled: true,
+                width: 'auto', height: 'auto',
+            };
+        } else if (type === 'image') {
+            newLayer = {
+                ...newLayerBase,
+                type: 'image',
+                name: `Image ${layerIdCounter}`,
+                imageSrc: null, 
+                opacity: 1,
+                width: '150px',
+                height: '100px',
+            };
+        }
+        appState.layers.push(newLayer);
+        createLayerElement(newLayer); // This also calls makeDraggable
+        selectLayer(newLayer.id); 
+        saveState();
+    }
+
+    function selectLayer(layerId) {
+        appState.selectedLayerId = layerId;
+        renderLayerPanel(); 
+        updateSelectedLayerControls();
+        updateSelectedLayerHighlight(); 
+        saveState(); 
+    }
+
+    function updateSelectedLayerProperty(key, value) {
+        const layer = getSelectedLayer();
+        if (layer) {
+            layer[key] = value;
+            if (key === 'name') { // If name changed, re-render panel to show new name
+                 renderLayerPanel();
+                 selectedLayerName.textContent = value; // Also update the controls header
+            }
+            updateLayerElement(layer); 
+            saveState();
+        }
+    }
+    
+    function toggleLayerVisibility(layerId) {
+        const layer = appState.layers.find(l => l.id === layerId);
+        if (layer) {
+            layer.visible = !layer.visible;
+            updateLayerElement(layer);
+            renderLayerPanel(); 
+            saveState();
+        }
+    }
+
+    function deleteLayer(layerId) {
+        appState.layers = appState.layers.filter(l => l.id !== layerId);
+        removeLayerElement(layerId);
+        
+        if (appState.selectedLayerId === layerId) {
+            appState.selectedLayerId = null;
+            updateSelectedLayerControls(); 
+        }
+        updateZIndices(); 
+        renderLayerPanel(); 
+        renderAllLayersOnCanvas(); 
+        saveState();
+    }
+    
+    function centerSelectedLayer() {
+        const layer = getSelectedLayer();
+        if (!layer) return;
+        const layerEl = layerElements.get(layer.id);
+        if (!layerEl) return;
+
+        const canvasWidth = canvasElement.offsetWidth;
+        const canvasHeight = canvasElement.offsetHeight;
+        const elementWidth = layerEl.offsetWidth;
+        const elementHeight = layerEl.offsetHeight;
+
+        layer.left = `${(canvasWidth - elementWidth) / 2}px`;
+        layer.top = `${(canvasHeight - elementHeight) / 2}px`;
+        
+        updateLayerElement(layer);
+        saveState();
+    }
+
+    function setupEventListeners() {
+        brandColorCtrl.addEventListener('input', () => { appState.brandKit.brandColor = brandColorCtrl.value; saveState(); });
+        brandLogoUploadCtrl.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    appState.brandKit.logoSrc = ev.target.result;
+                    renderBrandLogoWatermark(); saveState();
+                };
+                reader.readAsDataURL(file);
+            }
+            brandLogoUploadCtrl.value = '';
+        });
+        clearBrandLogoCtrl.addEventListener('click', () => { appState.brandKit.logoSrc = null; renderBrandLogoWatermark(); saveState(); });
+        brandLogoOpacityCtrl.addEventListener('input', () => { appState.brandKit.logoOpacity = parseFloat(brandLogoOpacityCtrl.value); renderBrandLogoWatermark(); saveState(); });
+        brandLogoSizeCtrl.addEventListener('input', () => { appState.brandKit.logoSize = parseInt(brandLogoSizeCtrl.value); renderBrandLogoWatermark(); saveState(); });
+        brandLogoPositionCtrl.addEventListener('change', () => { appState.brandKit.logoPosition = brandLogoPositionCtrl.value; renderBrandLogoWatermark(); saveState(); });
+
+        addTextLayerBtn.addEventListener('click', () => addNewLayer('text'));
+        addImageLayerBtn.addEventListener('click', () => addNewLayer('image'));
+
+        layerNameInputCtrl.addEventListener('change', (e) => updateSelectedLayerProperty('name', e.target.value));
+        centerLayerBtn.addEventListener('click', centerSelectedLayer);
+        layerTextInput.addEventListener('input', (e) => updateSelectedLayerProperty('text', e.target.value));
+        layerTextSize.addEventListener('input', (e) => updateSelectedLayerProperty('fontSize', parseInt(e.target.value)));
+        layerTextColor.addEventListener('input', (e) => updateSelectedLayerProperty('color', e.target.value));
+        layerTextFont.addEventListener('change', (e) => updateSelectedLayerProperty('fontFamily', e.target.value));
+        layerTextShadow.addEventListener('change', (e) => updateSelectedLayerProperty('textShadowEnabled', e.target.checked));
+        
+        layerImageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const layer = getSelectedLayer();
+            if (file && layer && layer.type === 'image') {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const newImageSrc = ev.target.result;
+                    updateSelectedLayerProperty('imageSrc', newImageSrc);
+                    const img = new Image();
+                    img.onload = () => {
+                        const currentWidth = parseFloat(layer.width) || img.naturalWidth;
+                        const aspectRatio = img.naturalHeight / img.naturalWidth;
+                        const newHeight = currentWidth * aspectRatio;
+                        updateSelectedLayerProperty('height', `${newHeight}px`);
+                        // Optionally update width too if it was 'auto' or similar
+                        // updateSelectedLayerProperty('width', `${currentWidth}px`);
+                    }
+                    img.src = newImageSrc;
+                };
+                reader.readAsDataURL(file);
+            }
+            layerImageUpload.value = ''; 
+        });
+        layerImageOpacity.addEventListener('input', (e) => updateSelectedLayerProperty('opacity', parseFloat(e.target.value)));
+
+        const gs = appState.globalSettings; 
+        bgTopColorCtrl.addEventListener('input', () => { gs.bgTopColor = bgTopColorCtrl.value; updateBackgroundDisplay(); saveState(); });
+        bgBottomColorCtrl.addEventListener('input', () => { gs.bgBottomColor = bgBottomColorCtrl.value; updateBackgroundDisplay(); saveState(); });
+        bgOrientationCtrl.addEventListener('change', () => { gs.bgOrientation = bgOrientationCtrl.value; updateBackgroundDisplay(); saveState(); });
+        canvasPresetCtrl.addEventListener('change', () => { gs.canvasPreset = canvasPresetCtrl.value; updateCanvasDimensions(); saveState(); });
+        safeZoneToggleCtrl.addEventListener('change', () => { gs.safeZoneToggle = safeZoneToggleCtrl.checked; toggleSafeZoneVisibility(); saveState(); });
+        
+        exportPngBtn.addEventListener('click', handleExport);
+        new ResizeObserver(renderBrandLogoWatermark).observe(canvasElement);
+    }
+
+    function makeDraggable(layerElement, layerObject) {
+        let isDragging = false, isResizing = false;
+        let startX, startY, initialLeft, initialTop, initialWidth, initialHeight;
+        let dragListening = false, resizeListening = false;
+        let resizeHandle = layerElement.querySelector('.resize-handle');
+
+        const onPointerDown = (e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id);
+             // Check again after selectLayer, as it might not select if there's an issue
+            if (appState.selectedLayerId !== layerObject.id) return;
+
+
+            e.preventDefault(); isDragging = true;
+            startX = e.clientX; startY = e.clientY;
+            initialLeft = layerElement.offsetLeft; initialTop = layerElement.offsetTop;
+            if (!dragListening) {
+                document.addEventListener('pointermove', onPointerMove);
+                document.addEventListener('pointerup', onDragUp);
+                dragListening = true;
+            }
+            try { layerElement.setPointerCapture(e.pointerId); } catch(err) {}
+        };
+
+        const onPointerMove = (e) => {
+            if (!isDragging) return;
+            layerObject.left = `${initialLeft + (e.clientX - startX)}px`;
+            layerObject.top = `${initialTop + (e.clientY - startY)}px`;
+            layerElement.style.left = layerObject.left;
+            layerElement.style.top = layerObject.top;
+        };
+
+        const onDragUp = (e) => {
+            if (isDragging) { isDragging = false; saveState(); }
+            if (dragListening) {
+                document.removeEventListener('pointermove', onPointerMove);
+                document.removeEventListener('pointerup', onDragUp);
+                dragListening = false;
+            }
+            try { if (layerElement.hasPointerCapture(e.pointerId)) layerElement.releasePointerCapture(e.pointerId); } catch(err) {}
+        };
+        layerElement.addEventListener('pointerdown', onPointerDown);
+
+        // Add resize handle for images, or text if fixed size (not implemented for text here)
+        if (layerObject.type === 'image') {
+            if (!resizeHandle) {
+                resizeHandle = document.createElement('span');
+                resizeHandle.classList.add('resize-handle');
+                layerElement.appendChild(resizeHandle);
+            }
+            resizeHandle.style.display = 'block'; // Ensure it's visible
+
+            const onResizeDown = (e) => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id);
+                if (appState.selectedLayerId !== layerObject.id) return;
+
+                e.preventDefault(); e.stopPropagation(); isResizing = true;
+                startX = e.clientX; startY = e.clientY;
+                initialWidth = layerElement.offsetWidth; initialHeight = layerElement.offsetHeight;
+                if (!resizeListening) {
+                    document.addEventListener('pointermove', onResizeMove);
+                    document.addEventListener('pointerup', onResizeUp);
+                    resizeListening = true;
+                }
+                try { resizeHandle.setPointerCapture(e.pointerId); } catch(err) {}
+            };
+            const onResizeMove = (e) => {
+                if (!isResizing) return;
+                let newWidth = initialWidth + (e.clientX - startX);
+                let newHeight = initialHeight + (e.clientY - startY);
+                if (newWidth < 20) newWidth = 20; if (newHeight < 20) newHeight = 20;
+                layerObject.width = `${newWidth}px`; layerObject.height = `${newHeight}px`;
+                layerElement.style.width = layerObject.width; layerElement.style.height = layerObject.height;
+            };
+            const onResizeUp = (e) => {
+                if (isResizing) { isResizing = false; saveState(); }
+                if (resizeListening) {
+                    document.removeEventListener('pointermove', onResizeMove);
+                    document.removeEventListener('pointerup', onResizeUp);
+                    resizeListening = false;
+                }
+                try { if (resizeHandle.hasPointerCapture(e.pointerId)) resizeHandle.releasePointerCapture(e.pointerId); } catch(err) {}
+            };
+            resizeHandle.addEventListener('pointerdown', onResizeDown);
+        } else if (resizeHandle) { // Hide handle for non-resizable types like current text
+            resizeHandle.style.display = 'none';
+        }
+    }
+
+    async function handleExport() {
+        const originalSafeZoneDisplay = safeZoneElement.style.display;
+        safeZoneElement.style.display = 'none'; 
+        const selectedCanvasEl = canvasElement.querySelector('.selected-on-canvas');
+        if (selectedCanvasEl) selectedCanvasEl.classList.remove('selected-on-canvas');
+
+        try {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
+            renderBrandLogoWatermark(); // Ensure logo is up-to-date before export
+            await new Promise(resolve => setTimeout(resolve, 150)); // Ensure DOM updates apply
+
+            const canvasOutput = await html2canvas(canvasElement, { 
+                backgroundColor: null, logging: false, useCORS: true,
+                onclone: (clonedDoc) => {
+                    const clonedCanvas = clonedDoc.getElementById('canvasElement');
+                    if (clonedCanvas) clonedCanvas.style.backgroundImage = canvasElement.style.backgroundImage;
+                }
+            });
+            
+            const dataUrl = canvasOutput.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `viral-creation-${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error("Export failed:", err);
+            alert("Sorry, image export failed. Please try again.");
+        } finally {
+            safeZoneElement.style.display = originalSafeZoneDisplay; 
+            if (selectedCanvasEl) selectedCanvasEl.classList.add('selected-on-canvas'); 
+        }
+    }
+
+    function initializeApp() {
+        loadState();
+        updateGlobalControlsDisplay(); 
+        updateBrandKitDisplay(); 
+        renderAllLayersOnCanvas(); 
+        renderLayerPanel();
+        updateSelectedLayerControls(); 
+        setupEventListeners();
+        if (!appState.selectedLayerId && appState.layers.length > 0) {
+            selectLayer(appState.layers[appState.layers.length - 1].id);
+        } else if (appState.selectedLayerId && !getSelectedLayer()) { // Selected layer ID exists but layer doesn't
+            appState.selectedLayerId = null; // Clear invalid selection
+            if (appState.layers.length > 0) { // Select top layer if any
+                 selectLayer(appState.layers[appState.layers.length - 1].id);
+            } else {
+                updateSelectedLayerControls(); // Hide controls if no layers
+            }
+        }
+    }
+    initializeApp();
+})();
+</script>
+</body>
+</html>
