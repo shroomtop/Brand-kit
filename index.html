@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Viral Creator Editor Pro - Multi-Layer & Brand Kit</title>
+  <title>Viral Creator Editor Pro - Universal Colors & TTS</title>
 
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'none';
@@ -14,96 +14,66 @@
                  connect-src 'self';">
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Inter:wght@400;700&family=Lobster&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Poppins:wght@400;700&family=Roboto+Condensed:wght@400;700&family=Roboto+Mono:wght@400;700&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=Nunito:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&family=Noto+Sans:wght@400;700&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    :root {
-      --canvas-w: 360px;
-      --canvas-h: 640px;
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      overscroll-behavior-y: contain;
-    }
-    .safe-zone-overlay {
-      pointer-events: none;
-      outline: 2px dashed rgba(255, 255, 255, .4);
-      box-shadow: inset 60px 80px 60px 80px rgba(255, 255, 255, .1);
-    }
-    .resize-handle {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      right: -7px; 
-      bottom: -7px;
-      background: #fff;
-      border-radius: 50%;
-      cursor: nwse-resize;
-      z-index: 60; /* Relative to its layer element */
-      touch-action: none;
-    }
+    :root { --canvas-w: 360px; --canvas-h: 640px; }
+    body { font-family: 'Inter', sans-serif; overscroll-behavior-y: contain; }
+    .safe-zone-overlay { pointer-events: none; outline: 2px dashed rgba(255, 255, 255, .4); box-shadow: inset 60px 80px 60px 80px rgba(255, 255, 255, .1); }
+    .resize-handle { position: absolute; width: 14px; height: 14px; right: -7px; bottom: -7px; background: #fff; border-radius: 50%; cursor: nwse-resize; z-index: 60; touch-action: none; }
     .control-group button { flex: 1; }
-
-    .layer-item {
-      padding: 0.5rem;
-      border: 1px solid #4A5568; /* gray-700 */
+    .layer-item { padding: 0.5rem; border: 1px solid #4A5568; border-radius: 0.25rem; margin-bottom: 0.5rem; cursor: pointer; background-color: #2D3748; transition: background-color 0.2s; display: flex; justify-content: space-between; align-items: center; }
+    .layer-item.selected { background-color: #4299e1; border-color: #63b3ed; }
+    .layer-item:hover { background-color: #4A5568; }
+    .layer-name { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
+    .layer-controls { display: flex; align-items: center; gap: 0.25rem; }
+    .layer-controls button { background: none; border: none; color: white; cursor: pointer; padding: 0.25rem; font-size: 0.875rem; }
+    .draggable-layer { position: absolute; cursor: move; touch-action: none; box-sizing: border-box; }
+    .draggable-layer.selected-on-canvas { outline: 2px dashed #4299e1; }
+    .draggable-layer img { pointer-events: none; width: 100%; height: 100%; object-fit: contain; }
+    .brand-logo-watermark { position: absolute; pointer-events: none; opacity: 0.7; }
+    #universalSavedColorsSection { padding: 0.5rem; background-color: #1A202C; border-radius: 0.25rem; margin-top: 0.5rem; }
+    .color-swatch-container { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; }
+    .color-swatch { width: 24px; height: 24px; border-radius: 4px; border: 1px solid #666; cursor: pointer; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .color-swatch:hover .delete-swatch-btn { display: flex; justify-content: center; align-items: center; }
+    .delete-swatch-btn { display: none; position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; background-color: #ef4444; color: white; border: none; border-radius: 50%; font-size: 12px; line-height: 18px; text-align: center; cursor: pointer; padding: 0; font-weight: bold; }
+    input[type="color"].targeted-for-saved-color { outline: 2px solid #63b3ed; box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.5); }
+    .tts-button { /* Styling for the new TTS button */
+      background-color: #7c3aed; /* purple-600 */
+      color: white;
+      padding: 0.5rem 1rem;
       border-radius: 0.25rem;
-      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      text-align: center;
       cursor: pointer;
-      background-color: #2D3748; /* gray-800 */
       transition: background-color 0.2s;
-      display: flex; /* For aligning name and controls */
-      justify-content: space-between; /* For aligning name and controls */
-      align-items: center; /* For aligning name and controls */
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
     }
-    .layer-item.selected {
-      background-color: #4299e1; /* blue-500 */
-      border-color: #63b3ed; /* blue-400 */
-    }
-    .layer-item:hover {
-      background-color: #4A5568; /* gray-700 */
-    }
-    .layer-name { /* Flex grow for layer name */
-        flex-grow: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin-right: 8px; /* Space before buttons */
-    }
-    .layer-controls { display: flex; align-items: center; gap: 0.25rem; /* gap for buttons */ }
-    .layer-controls button { background: none; border: none; color: white; cursor: pointer; padding: 0.25rem; font-size: 0.875rem; /* Smaller buttons */ }
-
-    .draggable-layer {
-      position: absolute;
-      cursor: move;
-      touch-action: none; /* For mobile dragging */
-      box-sizing: border-box; /* Important for width/height calculations */
-    }
-    .draggable-layer.selected-on-canvas {
-        outline: 2px dashed #4299e1; /* blue-500 - Highlight selected layer on canvas */
-    }
-     .draggable-layer img { /* Ensure img inside layer doesn't interfere with wrapper's events */
-        pointer-events: none;
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* Default, can be changed by layer prop */
-    }
-    .brand-logo-watermark {
-        position: absolute;
-        pointer-events: none; /* Non-interactive */
-        opacity: 0.7; /* Default, can be adjusted */
-    }
+    .tts-button:hover { background-color: #6d28d9; /* purple-700 */ }
+    .tts-button:disabled { background-color: #585065; cursor: not-allowed; }
   </style>
 </head>
 <body class="min-h-screen bg-gray-900 text-white flex flex-col lg:flex-row gap-6 p-4">
 
 <aside class="w-full max-w-sm space-y-6">
+  <section id="universalSavedColorsSection" class="space-y-2">
+    <h3 class="text-md font-semibold tracking-wide">Saved Colors</h3>
+    <div class="text-xs text-gray-400 mb-2">Click a color input below, then click a swatch to apply.</div>
+    <div id="universalSavedColorsContainer" class="color-swatch-container">
+        </div>
+    <button id="saveActiveColorBtn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded text-xs transition">Save Active Color</button>
+  </section>
+
   <section class="space-y-2">
     <h2 class="text-lg font-bold tracking-wide">Brand Kit</h2>
     <div class="flex items-center gap-2">
-        <label class="flex-1">Brand Color</label><input type="color" id="brandColorCtrl" value="#FF00FF" class="h-8 w-16">
+        <label class="flex-1">Brand Color</label><input type="color" id="brandColorCtrl" value="#00A0D2" class="h-8 w-16 color-input-targetable">
     </div>
     <div>
         <label class="text-sm">Logo Watermark</label>
@@ -131,13 +101,13 @@
         </div>
     <div class="flex gap-2">
         <button id="addTextLayerBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm transition">Add Text</button>
-        <button id="addImageLayerBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded text-sm transition">Add Image</button>
+        <button id="addImageLayerBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded text-sm transition">Add Image Layer</button>
     </div>
   </section>
   
   <section id="selectedLayerControlsSection" class="space-y-2 hidden">
     <h2 class="text-lg font-bold tracking-wide">Edit Layer: <span id="selectedLayerName" class="font-normal"></span></h2>
-    <div class="flex items-center gap-2">
+     <div class="flex items-center gap-2">
         <label class="flex-1 text-sm">Layer Name</label>
         <input type="text" id="layerNameInputCtrl" class="flex-[2] bg-gray-800 rounded p-1 text-sm">
     </div>
@@ -147,11 +117,32 @@
     <div id="textLayerControls" class="space-y-2 hidden">
         <textarea id="layerTextInput" rows="2" class="w-full rounded p-2 text-black text-sm" placeholder="Enter text..."></textarea>
         <div class="flex items-center gap-2"><label class="flex-1 text-sm">Size</label><input type="range" min="10" max="200" value="32" id="layerTextSize" class="flex-[2]"></div>
-        <div class="flex items-center gap-2"><label class="flex-1 text-sm">Color</label><input type="color" id="layerTextColor" value="#ffffff" class="h-8 w-16"></div>
+        <div class="flex items-center gap-2">
+            <label class="flex-1 text-sm">Color</label>
+            <input type="color" id="layerTextColor" value="#ffffff" class="h-8 w-10 p-0 border-none color-input-targetable">
+            <input type="text" id="layerTextColorHex" placeholder="#RRGGBB" class="flex-[1] bg-gray-800 rounded p-1 text-sm h-8">
+        </div>
         <select id="layerTextFont" class="w-full bg-gray-800 rounded p-2 text-sm">
-            <option value="'Anton', sans-serif">Anton</option>
-            <option value="'Bangers', cursive">Bangers</option>
-            <option value="'Inter', sans-serif">Inter</option>
+            <option value="'Inter', sans-serif" selected>Inter (Sans-Serif)</option>
+            <option value="'Anton', sans-serif">Anton (Display)</option>
+            <option value="'Bangers', cursive">Bangers (Display)</option>
+            <option value="'Lato', sans-serif">Lato (Sans-Serif)</option>
+            <option value="'Lobster', cursive">Lobster (Script)</option>
+            <option value="'Merriweather', serif">Merriweather (Serif)</option>
+            <option value="'Montserrat', sans-serif">Montserrat (Sans-Serif)</option>
+            <option value="'Noto Sans', sans-serif">Noto Sans (Global)</option>
+            <option value="'Noto Serif', serif">Noto Serif (Global Serif)</option>
+            <option value="'Nunito', sans-serif">Nunito (Sans-Serif)</option>
+            <option value="'Open Sans', sans-serif">Open Sans (Sans-Serif)</option>
+            <option value="'Oswald', sans-serif">Oswald (Display)</option>
+            <option value="'Pacifico', cursive">Pacifico (Script)</option>
+            <option value="'Playfair Display', serif">Playfair Display (Serif)</option>
+            <option value="'Poppins', sans-serif">Poppins (Sans-Serif)</option>
+            <option value="'Raleway', sans-serif">Raleway (Sans-Serif)</option>
+            <option value="'Roboto Condensed', sans-serif">Roboto Condensed</option>
+            <option value="'Roboto Mono', monospace">Roboto Mono (Monospace)</option>
+            <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+            <option value="'Ubuntu', sans-serif">Ubuntu (Sans-Serif)</option>
         </select>
         <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="layerTextShadow" class="accent-emerald-500"> Shadow</label>
     </div>
@@ -165,8 +156,8 @@
   <section class="space-y-2">
     <h2 class="text-lg font-bold tracking-wide">Background</h2>
     <div class="flex items-center gap-2">
-      <label class="flex-1 text-sm">Top</label><input type="color" id="bgTopColorCtrl" value="#ffcc00" class="h-8 w-16">
-      <label class="flex-1 text-sm">Bottom</label><input type="color" id="bgBottomColorCtrl" value="#ff6600" class="h-8 w-16">
+      <label class="flex-1 text-sm">Top</label><input type="color" id="bgTopColorCtrl" value="#ffcc00" class="h-8 w-16 color-input-targetable">
+      <label class="flex-1 text-sm">Bottom</label><input type="color" id="bgBottomColorCtrl" value="#ff6600" class="h-8 w-16 color-input-targetable">
     </div>
     <select id="bgOrientationCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
       <option value="to-b">Vertical</option><option value="to-r">Horizontal</option>
@@ -175,16 +166,27 @@
   </section>
 
   <section class="space-y-2">
-    <h2 class="text-lg font-bold tracking-wide">Canvas</h2>
+    <h2 class="text-lg font-bold tracking-wide">Utilities</h2>
+    <button id="readAloudBtn" class="w-full tts-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+        <span>Read Text Aloud</span>
+    </button>
+  </section>
+
+  <section class="space-y-2">
+    <h2 class="text-lg font-bold tracking-wide">Canvas & Export</h2>
     <select id="canvasPresetCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
-      <option value="360x640">Phone Preview (360×640)</option>
-      <option value="1080x1920">YouTube Short (1080×1920)</option>
-      <option value="1080x1080">Square (1080×1080)</option>
+      <option value="360x640">Phone Preview (360×640 - 9:16)</option>
+      <option value="1080x1920">YouTube Short (1080×1920 - 9:16)</option>
+      <option value="1080x1080">Square (1080×1080 - 1:1)</option>
     </select>
     <label class="inline-flex items-center gap-2 text-sm">
       <input type="checkbox" id="safeZoneToggleCtrl" checked class="accent-emerald-500"><span>Show Safe Zone</span>
     </label>
     <button id="exportPngBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded shadow transition">Export PNG</button>
+    <div class="text-xs text-gray-400 mt-1">Video export with audio is complex; use the 'Read Aloud' button for TTS playback.</div>
   </section>
 </aside>
 
@@ -205,10 +207,12 @@
     // --- DOM Element Selectors ---
     const getEl = id => document.getElementById(id);
 
-    const canvasWrapper = getEl('canvasWrapper');
     const canvasElement = getEl('canvasElement'); 
     const safeZoneElement = getEl('safeZoneElement');
     const brandLogoWatermarkElement = getEl('brandLogoWatermarkElement');
+    
+    const universalSavedColorsContainer = getEl('universalSavedColorsContainer');
+    const saveActiveColorBtn = getEl('saveActiveColorBtn');
 
     const brandColorCtrl = getEl('brandColorCtrl');
     const brandLogoUploadCtrl = getEl('brandLogoUploadCtrl');
@@ -228,7 +232,8 @@
     const textLayerControls = getEl('textLayerControls');
     const layerTextInput = getEl('layerTextInput');
     const layerTextSize = getEl('layerTextSize');
-    const layerTextColor = getEl('layerTextColor');
+    const layerTextColor = getEl('layerTextColor'); 
+    const layerTextColorHex = getEl('layerTextColorHex'); 
     const layerTextFont = getEl('layerTextFont');
     const layerTextShadow = getEl('layerTextShadow');
     const imageLayerControls = getEl('imageLayerControls');
@@ -238,45 +243,160 @@
     const bgTopColorCtrl = getEl('bgTopColorCtrl');
     const bgBottomColorCtrl = getEl('bgBottomColorCtrl');
     const bgOrientationCtrl = getEl('bgOrientationCtrl');
+    const readAloudBtn = getEl('readAloudBtn'); // TTS Button
     const canvasPresetCtrl = getEl('canvasPresetCtrl');
     const safeZoneToggleCtrl = getEl('safeZoneToggleCtrl');
     const exportPngBtn = getEl('exportPngBtn');
 
-    const APP_STORAGE_KEY = 'viralCreatorProState_v3_layers_kit';
+    const APP_STORAGE_KEY = 'viralCreatorProState_v6_universalColors';
     let appState = {};
 
     const defaultState = {
-        brandKit: {
-            brandColor: '#00A0D2',
-            logoSrc: null,
-            logoOpacity: 0.7,
-            logoSize: 15, 
-            logoPosition: 'bottom-right',
-        },
+        brandKit: { brandColor: '#00A0D2', logoSrc: null, logoOpacity: 0.7, logoSize: 15, logoPosition: 'bottom-right' },
         layers: [], 
         selectedLayerId: null,
-        globalSettings: {
-            bgTopColor: '#1a202c', 
-            bgBottomColor: '#2d3748',
-            bgOrientation: 'to-b',
-            canvasPreset: '360x640',
-            safeZoneToggle: true,
-        }
+        globalSettings: { bgTopColor: '#1a202c', bgBottomColor: '#2d3748', bgOrientation: 'to-b', canvasPreset: '360x640', safeZoneToggle: true }
     };
     
     let layerIdCounter = 0;
+    let activeColorInputTarget = null; // Track symbolic name ('brand', 'bgTop', etc.)
+    let activeColorInputElement = null; // Track the actual <input type="color"> element
 
+    // --- IndexedDB Setup for Saved Colors ---
+    const DB_NAME = 'ViralCreatorColorDB_v2';
+    const DB_VERSION = 1;
+    const COLOR_STORE_NAME = 'universalUserPalette';
+    let db;
+
+    async function initDB() {
+        return new Promise((resolve, reject) => {
+            if (db) return resolve(db); // Already initialized
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onerror = (event) => reject("IndexedDB error: " + request.error);
+            request.onsuccess = (event) => { db = request.result; resolve(db); };
+            request.onupgradeneeded = (event) => {
+                const dbInstance = event.target.result;
+                if (!dbInstance.objectStoreNames.contains(COLOR_STORE_NAME)) {
+                    dbInstance.createObjectStore(COLOR_STORE_NAME, { keyPath: 'hex' });
+                }
+            };
+        });
+    }
+
+    async function addSavedColorToDB(hexColor) {
+        if (!db || !CSS.supports('color', hexColor)) { console.warn('Invalid color or DB not ready:', hexColor); return; }
+        let normalizedHex = hexColor.toLowerCase();
+        if (normalizedHex.length === 4) normalizedHex = `#${normalizedHex[1]}${normalizedHex[1]}${normalizedHex[2]}${normalizedHex[2]}${normalizedHex[3]}${normalizedHex[3]}`;
+        if (normalizedHex.length !== 7) { console.warn('Invalid hex format:', hexColor); return; }
+
+        const transaction = db.transaction([COLOR_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(COLOR_STORE_NAME);
+        return new Promise((resolve, reject) => {
+            const request = store.put({ hex: normalizedHex, added: Date.now() });
+            request.onsuccess = () => { loadAndRenderUniversalSavedColors(); resolve(); };
+            request.onerror = (e) => { console.error('Failed to save color:', e); reject(request.error); };
+        });
+    }
+
+    async function getSavedColorsFromDB() {
+        if (!db) return [];
+        const transaction = db.transaction([COLOR_STORE_NAME], 'readonly');
+        const store = transaction.objectStore(COLOR_STORE_NAME);
+        return new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result.sort((a,b) => b.added - a.added)); 
+            request.onerror = (e) => { console.error('Failed to get colors:', e); reject(request.error); };
+        });
+    }
+    
+    async function deleteSavedColorFromDB(hexColor) {
+        if (!db) return;
+        const transaction = db.transaction([COLOR_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(COLOR_STORE_NAME);
+        return new Promise((resolve, reject) => {
+            const request = store.delete(hexColor);
+            request.onsuccess = () => { loadAndRenderUniversalSavedColors(); resolve(); };
+            request.onerror = (e) => { console.error('Failed to delete color:', e); reject(request.error); };
+        });
+    }
+
+    function setActiveColorInput(targetName, element) {
+        if (activeColorInputElement && activeColorInputElement !== element) {
+            activeColorInputElement.classList.remove('targeted-for-saved-color');
+        }
+        activeColorInputTarget = targetName;
+        activeColorInputElement = element;
+        if (activeColorInputElement) {
+            activeColorInputElement.classList.add('targeted-for-saved-color');
+        }
+        console.log("Active color target set to:", targetName); // Debugging
+    }
+
+    function clearActiveColorInputTarget() {
+        if (activeColorInputElement) {
+             activeColorInputElement.classList.remove('targeted-for-saved-color');
+        }
+        activeColorInputTarget = null;
+        activeColorInputElement = null;
+        console.log("Active color target cleared"); // Debugging
+    }
+    
+    function applySwatchColor(hex) {
+        if (!activeColorInputElement) {
+             alert("Please click on a color input (Brand, Background, or Layer Text) first to select where to apply the saved color.");
+             return;
+        }
+
+        console.log(`Applying ${hex} to target: ${activeColorInputTarget}`); // Debugging
+        activeColorInputElement.value = hex; 
+        activeColorInputElement.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        // If the target was the layer text color, also update the hex input field
+        if(activeColorInputTarget === 'layerText') {
+            layerTextColorHex.value = hex;
+        }
+        
+        clearActiveColorInputTarget(); // Deactivate target after applying color
+    }
+
+
+    async function loadAndRenderUniversalSavedColors() {
+        try {
+            const colors = await getSavedColorsFromDB();
+            universalSavedColorsContainer.innerHTML = ''; // Clear previous swatches
+            colors.forEach(colorObj => {
+                const swatch = document.createElement('div');
+                swatch.classList.add('color-swatch');
+                swatch.style.backgroundColor = colorObj.hex;
+                swatch.title = `Apply ${colorObj.hex} (Click color input first)`;
+                swatch.dataset.hex = colorObj.hex;
+                swatch.onclick = () => applySwatchColor(colorObj.hex); 
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('delete-swatch-btn');
+                deleteBtn.innerHTML = '&times;'; 
+                deleteBtn.title = `Delete ${colorObj.hex}`;
+                deleteBtn.onclick = (e) => { e.stopPropagation(); deleteSavedColorFromDB(colorObj.hex); };
+                swatch.appendChild(deleteBtn);
+                universalSavedColorsContainer.appendChild(swatch);
+            });
+        } catch (error) {
+            console.error("Error loading/rendering saved colors:", error);
+        }
+    }
+
+
+    // --- State Management & UI ---
     function loadState() {
         try {
             const storedState = localStorage.getItem(APP_STORAGE_KEY);
             if (storedState) {
                  const parsedState = JSON.parse(storedState);
                  appState = { 
-                    ...defaultState, 
-                    ...parsedState,
+                    ...defaultState, ...parsedState,
                     brandKit: { ...defaultState.brandKit, ...(parsedState.brandKit || {}) },
                     globalSettings: { ...defaultState.globalSettings, ...(parsedState.globalSettings || {}) },
-                    layers: parsedState.layers || [] // Ensure layers is an array
+                    layers: parsedState.layers || [] 
                 };
                 if (appState.layers && appState.layers.length > 0) {
                     const maxId = appState.layers.reduce((max, layer) => {
@@ -284,636 +404,366 @@
                         return idNum > max ? idNum : max;
                     }, 0);
                     layerIdCounter = maxId;
-                } else {
-                    layerIdCounter = 0;
-                }
-
-            } else {
-                appState = JSON.parse(JSON.stringify(defaultState)); 
-            }
-        } catch (e) {
-            console.error("Failed to load state from localStorage:", e);
-            appState = JSON.parse(JSON.stringify(defaultState));
-        }
+                } else { layerIdCounter = 0; }
+            } else { appState = JSON.parse(JSON.stringify(defaultState)); }
+        } catch (e) { console.error("LS Load Error:", e); appState = JSON.parse(JSON.stringify(defaultState)); }
     }
 
     function saveState() {
-        try {
-            localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
-        } catch (e) {
-            console.error("Failed to save state to localStorage:", e);
-        }
+        try { localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState)); } 
+        catch (e) { console.error("LS Save Error:", e); }
     }
     
-    function getSelectedLayer() {
-        if (!appState.selectedLayerId) return null;
-        return appState.layers.find(l => l.id === appState.selectedLayerId);
-    }
-
+    function getSelectedLayer() { return appState.selectedLayerId ? appState.layers.find(l => l.id === appState.selectedLayerId) : null; }
     const layerElements = new Map(); 
-
     function createLayerElement(layer) {
-        const el = document.createElement('div');
-        el.id = `canvas-layer-${layer.id}`;
-        el.classList.add('draggable-layer');
-        el.style.zIndex = layer.zIndex;
-        el.style.left = layer.left || '10px';
-        el.style.top = layer.top || '10px';
+        const el = document.createElement('div'); el.id = `canvas-layer-${layer.id}`; el.classList.add('draggable-layer');
+        el.style.zIndex = layer.zIndex; el.style.left = layer.left || '10px'; el.style.top = layer.top || '10px';
         el.style.visibility = layer.visible ? 'visible' : 'hidden';
-
         if (layer.type === 'text') {
-            el.style.fontFamily = layer.fontFamily;
-            el.style.fontSize = `${layer.fontSize}px`;
-            el.style.color = layer.color;
+            el.style.fontFamily = layer.fontFamily; el.style.fontSize = `${layer.fontSize}px`; el.style.color = layer.color;
             el.style.textShadow = layer.textShadowEnabled ? '2px 2px 4px rgba(0,0,0,.6)' : 'none';
-            el.textContent = layer.text;
-            el.style.whiteSpace = 'pre-wrap'; 
-            el.style.padding = '5px'; // Padding for text layers for better visual
-            el.style.width = layer.width || 'auto'; 
-            el.style.height = layer.height || 'auto';
+            el.textContent = layer.text; el.style.whiteSpace = 'pre-wrap'; el.style.padding = '5px'; 
+            el.style.width = layer.width || 'auto'; el.style.height = layer.height || 'auto';
         } else if (layer.type === 'image') {
-            const img = document.createElement('img');
-            img.src = layer.imageSrc || '';
-            img.alt = layer.name || 'Image Layer';
-            el.appendChild(img);
-            el.style.width = layer.width || '100px';
-            el.style.height = layer.height || '100px';
+            const img = document.createElement('img'); img.src = layer.imageSrc || ''; img.alt = layer.name || 'Image';
+            el.appendChild(img); el.style.width = layer.width || '100px'; el.style.height = layer.height || '100px';
             el.style.opacity = layer.opacity;
         }
-        
-        canvasElement.appendChild(el);
-        layerElements.set(layer.id, el);
-        makeDraggable(el, layer); // Make the new element draggable
-        return el;
+        canvasElement.appendChild(el); layerElements.set(layer.id, el); makeDraggable(el, layer); return el;
     }
-
     function updateLayerElement(layer) {
-        const el = layerElements.get(layer.id);
-        if (!el) return createLayerElement(layer);
-
-        el.style.left = layer.left;
-        el.style.top = layer.top;
-        el.style.zIndex = layer.zIndex;
+        const el = layerElements.get(layer.id); if (!el) return createLayerElement(layer);
+        el.style.left = layer.left; el.style.top = layer.top; el.style.zIndex = layer.zIndex;
         el.style.visibility = layer.visible ? 'visible' : 'hidden';
-        
-        if (layer.id === appState.selectedLayerId) {
-            el.classList.add('selected-on-canvas');
-        } else {
-            el.classList.remove('selected-on-canvas');
-        }
-
+        el.classList.toggle('selected-on-canvas', layer.id === appState.selectedLayerId);
         if (layer.type === 'text') {
-            el.style.fontFamily = layer.fontFamily;
-            el.style.fontSize = `${layer.fontSize}px`;
-            el.style.color = layer.color;
+            el.style.fontFamily = layer.fontFamily; el.style.fontSize = `${layer.fontSize}px`; el.style.color = layer.color;
             el.style.textShadow = layer.textShadowEnabled ? '2px 2px 4px rgba(0,0,0,.6)' : 'none';
-            el.textContent = layer.text;
-            el.style.width = layer.width || 'auto';
-            el.style.height = layer.height || 'auto';
+            el.textContent = layer.text; el.style.width = layer.width || 'auto'; el.style.height = layer.height || 'auto';
         } else if (layer.type === 'image') {
-            const img = el.querySelector('img');
-            if(img) img.src = layer.imageSrc || '';
-            el.style.width = layer.width;
-            el.style.height = layer.height;
-            el.style.opacity = layer.opacity;
+            const img = el.querySelector('img'); if(img) img.src = layer.imageSrc || '';
+            el.style.width = layer.width; el.style.height = layer.height; el.style.opacity = layer.opacity;
         }
     }
-    
-    function removeLayerElement(layerId) {
-        const el = layerElements.get(layerId);
-        if (el) {
-            el.remove();
-            layerElements.delete(layerId);
-        }
-    }
-
+    function removeLayerElement(layerId) { const el = layerElements.get(layerId); if (el) { el.remove(); layerElements.delete(layerId); }}
     function renderAllLayersOnCanvas() {
-        Array.from(canvasElement.children).forEach(child => {
-            if (child.classList.contains('draggable-layer')) child.remove();
-        });
-        layerElements.clear();
-        appState.layers.forEach(layer => createLayerElement(layer));
-        updateSelectedLayerHighlight();
+        Array.from(canvasElement.children).forEach(child => { if (child.classList.contains('draggable-layer')) child.remove(); });
+        layerElements.clear(); appState.layers.forEach(layer => createLayerElement(layer)); updateSelectedLayerHighlight();
     }
-    
-    function updateSelectedLayerHighlight() {
-        layerElements.forEach((el, id) => {
-            el.classList.toggle('selected-on-canvas', id === appState.selectedLayerId);
-        });
-    }
-
+    function updateSelectedLayerHighlight() { layerElements.forEach((el, id) => el.classList.toggle('selected-on-canvas', id === appState.selectedLayerId));}
     function renderLayerPanel() {
         layerPanel.innerHTML = '';
         [...appState.layers].reverse().forEach(layer => {
-            const item = document.createElement('div');
-            item.classList.add('layer-item');
+            const item = document.createElement('div'); item.classList.add('layer-item');
             item.classList.toggle('selected', layer.id === appState.selectedLayerId);
-            
-            const nameSpan = document.createElement('span');
-            nameSpan.classList.add('layer-name');
-            nameSpan.textContent = layer.name || `Layer ${layer.id.split('-')[1]}`;
-            nameSpan.title = `Type: ${layer.type} (ID: ${layer.id})`;
-            item.appendChild(nameSpan);
-
-            item.draggable = true;
+            const nameSpan = document.createElement('span'); nameSpan.classList.add('layer-name');
+            nameSpan.textContent = layer.name || `Layer ${layer.id.split('-')[1]}`; nameSpan.title = `Type: ${layer.type} (ID: ${layer.id})`;
+            item.appendChild(nameSpan); item.draggable = true;
             item.addEventListener('click', () => selectLayer(layer.id));
-            item.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', layer.id));
-            
-            const controlsDiv = document.createElement('div');
-            controlsDiv.classList.add('layer-controls');
-            
-            const visibilityBtn = document.createElement('button');
-            visibilityBtn.innerHTML = layer.visible ? '👁️' : '🙈';
-            visibilityBtn.title = layer.visible ? 'Hide' : 'Show';
-            visibilityBtn.onclick = (e) => { e.stopPropagation(); toggleLayerVisibility(layer.id); };
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '🗑️';
-            deleteBtn.title = 'Delete';
+            item.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', layer.id); e.dataTransfer.effectAllowed = 'move'; });
+            const controlsDiv = document.createElement('div'); controlsDiv.classList.add('layer-controls');
+            const visibilityBtn = document.createElement('button'); visibilityBtn.innerHTML = layer.visible ? '👁️' : '🙈';
+            visibilityBtn.title = layer.visible ? 'Hide' : 'Show'; visibilityBtn.onclick = (e) => { e.stopPropagation(); toggleLayerVisibility(layer.id); };
+            const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '🗑️'; deleteBtn.title = 'Delete';
             deleteBtn.onclick = (e) => { e.stopPropagation(); deleteLayer(layer.id); };
-            
-            controlsDiv.appendChild(visibilityBtn);
-            controlsDiv.appendChild(deleteBtn);
-            item.appendChild(controlsDiv);
-            layerPanel.appendChild(item);
+            controlsDiv.appendChild(visibilityBtn); controlsDiv.appendChild(deleteBtn); item.appendChild(controlsDiv); layerPanel.appendChild(item);
         });
-        
-        layerPanel.ondragover = (e) => e.preventDefault();
+        layerPanel.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
         layerPanel.ondrop = (e) => {
-            e.preventDefault();
-            const droppedLayerId = e.dataTransfer.getData('text/plain');
+            e.preventDefault(); const droppedLayerId = e.dataTransfer.getData('text/plain');
             const targetItem = e.target.closest('.layer-item');
             if (targetItem) {
-                const targetName = targetItem.querySelector('.layer-name').textContent;
-                const targetLayer = appState.layers.find(l => (l.name || `Layer ${l.id.split('-')[1]}`) === targetName);
-                 if (targetLayer && droppedLayerId !== targetLayer.id) {
-                    moveLayer(droppedLayerId, targetLayer.id);
-                }
+                const targetNameSpan = targetItem.querySelector('.layer-name');
+                if(targetNameSpan) { const idMatch = (targetNameSpan.title || '').match(/\(ID: (l-\d+)\)/); if (idMatch && idMatch[1]) { const targetLayerId = idMatch[1]; if (droppedLayerId !== targetLayerId) moveLayer(droppedLayerId, targetLayerId); }}
             }
         };
     }
-    
     function moveLayer(sourceId, targetIdBefore) {
-        const sourceIndex = appState.layers.findIndex(l => l.id === sourceId);
-        if (sourceIndex === -1) return;
-
+        const sourceIndex = appState.layers.findIndex(l => l.id === sourceId); if (sourceIndex === -1) return;
         const [movedLayer] = appState.layers.splice(sourceIndex, 1);
-        
-        const targetIndexBefore = appState.layers.findIndex(l => l.id === targetIdBefore);
-        
-        // If targetIdBefore is not found, or source was before target, logic might need adjustment
-        // This simple splice inserts before the targetId's new position if it moved.
-        // The important part is that layers array order dictates z-index.
-        // We want to insert the movedLayer *above* the target in visual stack (higher index in reversed list)
-        // which means *before* it in the normal list if targetIndexBefore is where we want to place it
-        // If the panel is reversed, "dropping on X" means X will be below the dropped item.
-        // So, insert `movedLayer` at the index of `targetIdBefore`.
-        if (targetIndexBefore !== -1) {
-            appState.layers.splice(targetIndexBefore, 0, movedLayer);
-        } else { // Dropped in empty space or weird target, append to top (which is end of array)
-            appState.layers.push(movedLayer);
-        }
-        
-        updateZIndices();
-        renderLayerPanel();
-        renderAllLayersOnCanvas();
-        saveState();
+        let targetIndexToInsert = appState.layers.findIndex(l => l.id === targetIdBefore);
+        if (targetIndexToInsert !== -1) appState.layers.splice(targetIndexToInsert, 0, movedLayer); else appState.layers.push(movedLayer); 
+        updateZIndices(); renderLayerPanel(); renderAllLayersOnCanvas(); saveState();
     }
-
-    function updateZIndices() {
-        appState.layers.forEach((layer, index) => {
-            layer.zIndex = index + 1; 
-        });
-    }
-
+    function updateZIndices() { appState.layers.forEach((layer, index) => layer.zIndex = index + 1); }
     function updateSelectedLayerControls() {
         const layer = getSelectedLayer();
-        if (!layer) {
-            selectedLayerControlsSection.classList.add('hidden');
-            return;
-        }
+        if (!layer) { selectedLayerControlsSection.classList.add('hidden'); return; }
         selectedLayerControlsSection.classList.remove('hidden');
         selectedLayerName.textContent = layer.name || `Layer ${layer.id.split('-')[1]}`;
         layerNameInputCtrl.value = layer.name || '';
-
-        textLayerControls.classList.add('hidden');
-        imageLayerControls.classList.add('hidden');
-
+        textLayerControls.classList.add('hidden'); imageLayerControls.classList.add('hidden');
         if (layer.type === 'text') {
-            textLayerControls.classList.remove('hidden');
-            layerTextInput.value = layer.text;
-            layerTextSize.value = layer.fontSize;
-            layerTextColor.value = layer.color;
-            layerTextFont.value = layer.fontFamily;
-            layerTextShadow.checked = layer.textShadowEnabled;
+            textLayerControls.classList.remove('hidden'); layerTextInput.value = layer.text;
+            layerTextSize.value = layer.fontSize; layerTextColor.value = layer.color; layerTextColorHex.value = layer.color;
+            layerTextFont.value = layer.fontFamily; layerTextShadow.checked = layer.textShadowEnabled;
+            setActiveColorInput('layerText', layerTextColor); // Default target
         } else if (layer.type === 'image') {
-            imageLayerControls.classList.remove('hidden');
-            layerImageOpacity.value = layer.opacity;
+            imageLayerControls.classList.remove('hidden'); layerImageOpacity.value = layer.opacity;
         }
     }
-
     function updateGlobalControlsDisplay() {
-        bgTopColorCtrl.value = appState.globalSettings.bgTopColor;
-        bgBottomColorCtrl.value = appState.globalSettings.bgBottomColor;
-        bgOrientationCtrl.value = appState.globalSettings.bgOrientation;
-        canvasPresetCtrl.value = appState.globalSettings.canvasPreset;
+        bgTopColorCtrl.value = appState.globalSettings.bgTopColor; bgBottomColorCtrl.value = appState.globalSettings.bgBottomColor;
+        bgOrientationCtrl.value = appState.globalSettings.bgOrientation; canvasPresetCtrl.value = appState.globalSettings.canvasPreset;
         safeZoneToggleCtrl.checked = appState.globalSettings.safeZoneToggle;
-        updateBackgroundDisplay();
-        updateCanvasDimensions(); // This also calls renderBrandLogoWatermark
-        toggleSafeZoneVisibility();
+        updateBackgroundDisplay(); updateCanvasDimensions(); toggleSafeZoneVisibility();
     }
-    
     function updateBrandKitDisplay() {
-        brandColorCtrl.value = appState.brandKit.brandColor;
-        brandLogoOpacityCtrl.value = appState.brandKit.logoOpacity;
-        brandLogoSizeCtrl.value = appState.brandKit.logoSize;
-        brandLogoPositionCtrl.value = appState.brandKit.logoPosition;
+        brandColorCtrl.value = appState.brandKit.brandColor; brandLogoOpacityCtrl.value = appState.brandKit.logoOpacity;
+        brandLogoSizeCtrl.value = appState.brandKit.logoSize; brandLogoPositionCtrl.value = appState.brandKit.logoPosition;
         renderBrandLogoWatermark();
     }
-
     function renderBrandLogoWatermark() {
         if (appState.brandKit.logoSrc && canvasElement.offsetWidth > 0 && canvasElement.offsetHeight > 0) {
-            brandLogoWatermarkElement.src = appState.brandKit.logoSrc;
-            brandLogoWatermarkElement.classList.remove('hidden');
-            brandLogoWatermarkElement.style.opacity = appState.brandKit.logoOpacity;
-            
-            const canvasWidth = canvasElement.offsetWidth;
-            const canvasHeight = canvasElement.offsetHeight; // For centering vertical
-            const logoSizePercent = appState.brandKit.logoSize / 100;
+            brandLogoWatermarkElement.src = appState.brandKit.logoSrc; brandLogoWatermarkElement.classList.remove('hidden');
+            const canvasWidth = canvasElement.offsetWidth; const logoSizePercent = appState.brandKit.logoSize / 100;
             const logoPixelWidth = canvasWidth * logoSizePercent;
-            
-            brandLogoWatermarkElement.style.width = `${logoPixelWidth}px`;
-            brandLogoWatermarkElement.style.height = 'auto';
-
-            const margin = 10; 
-            // Need to ensure image is loaded to get its actual height for precise centering.
-            const tempImgForDimensions = new Image();
+            const margin = 10; const tempImgForDimensions = new Image();
             tempImgForDimensions.onload = () => {
-                const logoNaturalWidth = tempImgForDimensions.naturalWidth;
-                const logoNaturalHeight = tempImgForDimensions.naturalHeight;
-                const logoPixelHeight = (logoNaturalHeight / logoNaturalWidth) * logoPixelWidth;
-
+                if (tempImgForDimensions.naturalWidth === 0) { brandLogoWatermarkElement.classList.add('hidden'); return; }
+                const logoPixelHeight = (tempImgForDimensions.naturalHeight / tempImgForDimensions.naturalWidth) * logoPixelWidth;
+                let cssText = `width:${logoPixelWidth}px; height:auto; opacity:${appState.brandKit.logoOpacity};`;
                 switch (appState.brandKit.logoPosition) {
-                    case 'bottom-right':
-                        brandLogoWatermarkElement.style.top = 'auto'; brandLogoWatermarkElement.style.left = 'auto';
-                        brandLogoWatermarkElement.style.bottom = `${margin}px`; brandLogoWatermarkElement.style.right = `${margin}px`;
-                        break;
-                    case 'bottom-left':
-                        brandLogoWatermarkElement.style.top = 'auto'; brandLogoWatermarkElement.style.right = 'auto';
-                        brandLogoWatermarkElement.style.bottom = `${margin}px`; brandLogoWatermarkElement.style.left = `${margin}px`;
-                        break;
-                    case 'top-right':
-                        brandLogoWatermarkElement.style.bottom = 'auto'; brandLogoWatermarkElement.style.left = 'auto';
-                        brandLogoWatermarkElement.style.top = `${margin}px`; brandLogoWatermarkElement.style.right = `${margin}px`;
-                        break;
-                    case 'top-left':
-                        brandLogoWatermarkElement.style.bottom = 'auto'; brandLogoWatermarkElement.style.right = 'auto';
-                        brandLogoWatermarkElement.style.top = `${margin}px`; brandLogoWatermarkElement.style.left = `${margin}px`;
-                        break;
-                    case 'center':
-                        brandLogoWatermarkElement.style.right = 'auto'; brandLogoWatermarkElement.style.bottom = 'auto';
-                        brandLogoWatermarkElement.style.top = `calc(50% - ${logoPixelHeight / 2}px)`;
-                        brandLogoWatermarkElement.style.left = `calc(50% - ${logoPixelWidth / 2}px)`;
-                        break;
-                }
+                    case 'bottom-right': cssText += `top:auto;left:auto;bottom:${margin}px;right:${margin}px;`; break;
+                    case 'bottom-left': cssText += `top:auto;right:auto;bottom:${margin}px;left:${margin}px;`; break;
+                    case 'top-right': cssText += `bottom:auto;left:auto;top:${margin}px;right:${margin}px;`; break;
+                    case 'top-left': cssText += `bottom:auto;right:auto;top:${margin}px;left:${margin}px;`; break;
+                    case 'center': cssText += `right:auto;bottom:auto;top:calc(50% - ${logoPixelHeight / 2}px);left:calc(50% - ${logoPixelWidth / 2}px);`; break;
+                } brandLogoWatermarkElement.style.cssText = cssText;
             }
+            tempImgForDimensions.onerror = () => brandLogoWatermarkElement.classList.add('hidden');
             tempImgForDimensions.src = appState.brandKit.logoSrc;
-
-
-        } else {
-            brandLogoWatermarkElement.classList.add('hidden');
-            brandLogoWatermarkElement.src = '';
-        }
+        } else { brandLogoWatermarkElement.classList.add('hidden'); brandLogoWatermarkElement.src = ''; }
     }
-
     function updateBackgroundDisplay() {
-        const gs = appState.globalSettings;
-        const orientation = gs.bgOrientation.replace('to-', 'to ');
-        canvasElement.style.backgroundImage = `linear-gradient(${orientation}, ${gs.bgTopColor}, ${gs.bgBottomColor})`;
+        const gs = appState.globalSettings; const o = gs.bgOrientation.replace('to-', 'to ');
+        canvasElement.style.backgroundImage = `linear-gradient(${o}, ${gs.bgTopColor}, ${gs.bgBottomColor})`;
     }
-
     function updateCanvasDimensions() {
-        const gs = appState.globalSettings;
-        const [w, h] = gs.canvasPreset.split('x');
-        document.documentElement.style.setProperty('--canvas-w', `${w}px`);
-        document.documentElement.style.setProperty('--canvas-h', `${h}px`);
-        // Call after a brief timeout to allow DOM to update canvas size
+        const [w, h] = appState.globalSettings.canvasPreset.split('x');
+        document.documentElement.style.setProperty('--canvas-w', `${w}px`); document.documentElement.style.setProperty('--canvas-h', `${h}px`);
         setTimeout(renderBrandLogoWatermark, 50); 
     }
-
-    function toggleSafeZoneVisibility() {
-        safeZoneElement.style.display = appState.globalSettings.safeZoneToggle ? 'block' : 'none';
+    function toggleSafeZoneVisibility() { safeZoneElement.style.display = appState.globalSettings.safeZoneToggle ? 'block' : 'none'; }
+    function addNewLayer(type) {
+        layerIdCounter++; const id = `l-${layerIdCounter}`;
+        const base = { id, visible: true, zIndex: 0, left: `${Math.random()*20+10}px`, top: `${Math.random()*30+10}px`};
+        let newLayer;
+        if (type === 'text') newLayer = {...base, type, name:`Text ${layerIdCounter}`, text:'New Text', fontSize:32, color:appState.brandKit.brandColor, fontFamily:"'Inter', sans-serif", textShadowEnabled:true, width:'auto', height:'auto'};
+        else if (type === 'image') newLayer = {...base, type, name:`Image ${layerIdCounter}`, imageSrc:null, opacity:1, width:'150px', height:'100px'};
+        appState.layers.push(newLayer); updateZIndices(); createLayerElement(newLayer); selectLayer(id); saveState();
+    }
+    function selectLayer(id) { appState.selectedLayerId = id; renderLayerPanel(); updateSelectedLayerControls(); updateSelectedLayerHighlight(); saveState(); }
+    function updateSelectedLayerProperty(key, value) {
+        const l = getSelectedLayer(); if (!l) return; l[key] = value;
+        if (key === 'name') { renderLayerPanel(); selectedLayerName.textContent = value || `Layer ${l.id.split('-')[1]}`; }
+        updateLayerElement(l); saveState();
+    }
+    function toggleLayerVisibility(id) { const l=appState.layers.find(x=>x.id===id); if(l){l.visible=!l.visible;updateLayerElement(l);renderLayerPanel();saveState();}}
+    function deleteLayer(id) {
+        appState.layers = appState.layers.filter(l => l.id !== id); removeLayerElement(id);
+        if (appState.selectedLayerId === id) {
+            appState.selectedLayerId = null;
+            if (appState.layers.length > 0) selectLayer(appState.layers[appState.layers.length - 1].id); else updateSelectedLayerControls();
+        }
+        updateZIndices(); renderLayerPanel(); saveState();
+    }
+    function centerSelectedLayer() {
+        const l = getSelectedLayer(), el = layerElements.get(l.id); if(!l || !el) return;
+        l.left = `${(canvasElement.offsetWidth - el.offsetWidth) / 2}px`; l.top = `${(canvasElement.offsetHeight - el.offsetHeight) / 2}px`;
+        updateLayerElement(l); saveState();
     }
     
-    function addNewLayer(type) {
-        layerIdCounter++;
-        const newLayerBase = {
-            id: `l-${layerIdCounter}`,
-            visible: true,
-            zIndex: appState.layers.length + 1,
-            left: `${Math.random() * 30 + 10}px`, // Random initial position
-            top: `${Math.random() * 50 + 20}px`,
+    // --- Text-to-Speech ---
+    function readTextAloud() {
+        if (!('speechSynthesis' in window)) {
+            alert('Sorry, your browser does not support Text-to-Speech.');
+            return;
+        }
+        if (speechSynthesis.speaking) {
+            speechSynthesis.cancel(); // Stop current speech if any
+        }
+
+        const textToRead = appState.layers
+            .filter(layer => layer.type === 'text' && layer.visible && layer.text.trim() !== '')
+            .sort((a, b) => a.zIndex - b.zIndex) // Read layers in order
+            .map(layer => layer.text.trim())
+            .join('. '); // Join text blocks with a pause
+
+        if (textToRead === '') {
+            alert('No visible text found on the canvas to read.');
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        // You could add options here to select voice, rate, pitch if desired
+        // utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Your Preferred Voice');
+        // utterance.rate = 1; // 0.1 to 10
+        // utterance.pitch = 1; // 0 to 2
+
+        utterance.onerror = (event) => {
+            console.error('SpeechSynthesisUtterance.onerror', event);
+            alert(`An error occurred during speech synthesis: ${event.error}`);
+            readAloudBtn.disabled = false;
+            readAloudBtn.querySelector('span').textContent = 'Read Text Aloud';
+
+        };
+         utterance.onstart = () => {
+            readAloudBtn.disabled = true;
+            readAloudBtn.querySelector('span').textContent = 'Speaking...';
+        };
+        utterance.onend = () => {
+            readAloudBtn.disabled = false;
+            readAloudBtn.querySelector('span').textContent = 'Read Text Aloud';
         };
 
-        let newLayer;
-        if (type === 'text') {
-            newLayer = {
-                ...newLayerBase,
-                type: 'text',
-                name: `Text ${layerIdCounter}`,
-                text: 'New Text',
-                fontSize: 32,
-                color: appState.brandKit.brandColor, 
-                fontFamily: "'Inter', sans-serif",
-                textShadowEnabled: true,
-                width: 'auto', height: 'auto',
-            };
-        } else if (type === 'image') {
-            newLayer = {
-                ...newLayerBase,
-                type: 'image',
-                name: `Image ${layerIdCounter}`,
-                imageSrc: null, 
-                opacity: 1,
-                width: '150px',
-                height: '100px',
-            };
-        }
-        appState.layers.push(newLayer);
-        createLayerElement(newLayer); // This also calls makeDraggable
-        selectLayer(newLayer.id); 
-        saveState();
+
+        speechSynthesis.speak(utterance);
     }
 
-    function selectLayer(layerId) {
-        appState.selectedLayerId = layerId;
-        renderLayerPanel(); 
-        updateSelectedLayerControls();
-        updateSelectedLayerHighlight(); 
-        saveState(); 
-    }
 
-    function updateSelectedLayerProperty(key, value) {
-        const layer = getSelectedLayer();
-        if (layer) {
-            layer[key] = value;
-            if (key === 'name') { // If name changed, re-render panel to show new name
-                 renderLayerPanel();
-                 selectedLayerName.textContent = value; // Also update the controls header
-            }
-            updateLayerElement(layer); 
-            saveState();
-        }
-    }
-    
-    function toggleLayerVisibility(layerId) {
-        const layer = appState.layers.find(l => l.id === layerId);
-        if (layer) {
-            layer.visible = !layer.visible;
-            updateLayerElement(layer);
-            renderLayerPanel(); 
-            saveState();
-        }
-    }
-
-    function deleteLayer(layerId) {
-        appState.layers = appState.layers.filter(l => l.id !== layerId);
-        removeLayerElement(layerId);
-        
-        if (appState.selectedLayerId === layerId) {
-            appState.selectedLayerId = null;
-            updateSelectedLayerControls(); 
-        }
-        updateZIndices(); 
-        renderLayerPanel(); 
-        renderAllLayersOnCanvas(); 
-        saveState();
-    }
-    
-    function centerSelectedLayer() {
-        const layer = getSelectedLayer();
-        if (!layer) return;
-        const layerEl = layerElements.get(layer.id);
-        if (!layerEl) return;
-
-        const canvasWidth = canvasElement.offsetWidth;
-        const canvasHeight = canvasElement.offsetHeight;
-        const elementWidth = layerEl.offsetWidth;
-        const elementHeight = layerEl.offsetHeight;
-
-        layer.left = `${(canvasWidth - elementWidth) / 2}px`;
-        layer.top = `${(canvasHeight - elementHeight) / 2}px`;
-        
-        updateLayerElement(layer);
-        saveState();
-    }
-
+    // --- Event Handler Setup ---
     function setupEventListeners() {
-        brandColorCtrl.addEventListener('input', () => { appState.brandKit.brandColor = brandColorCtrl.value; saveState(); });
-        brandLogoUploadCtrl.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    appState.brandKit.logoSrc = ev.target.result;
-                    renderBrandLogoWatermark(); saveState();
-                };
-                reader.readAsDataURL(file);
-            }
-            brandLogoUploadCtrl.value = '';
+        // Set active color input target
+        const colorInputs = [brandColorCtrl, bgTopColorCtrl, bgBottomColorCtrl, layerTextColor];
+        colorInputs.forEach(ctrl => {
+            const targetName = ctrl.id.replace('Ctrl', '').replace('layerText', 'layerText'); 
+            const handler = () => setActiveColorInput(targetName, ctrl);
+            ctrl.addEventListener('focus', handler);
+            ctrl.addEventListener('click', handler); // Needed for color picker modal
         });
-        clearBrandLogoCtrl.addEventListener('click', () => { appState.brandKit.logoSrc = null; renderBrandLogoWatermark(); saveState(); });
-        brandLogoOpacityCtrl.addEventListener('input', () => { appState.brandKit.logoOpacity = parseFloat(brandLogoOpacityCtrl.value); renderBrandLogoWatermark(); saveState(); });
-        brandLogoSizeCtrl.addEventListener('input', () => { appState.brandKit.logoSize = parseInt(brandLogoSizeCtrl.value); renderBrandLogoWatermark(); saveState(); });
-        brandLogoPositionCtrl.addEventListener('change', () => { appState.brandKit.logoPosition = brandLogoPositionCtrl.value; renderBrandLogoWatermark(); saveState(); });
+        // Special handling for hex input to target its corresponding color picker
+        layerTextColorHex.addEventListener('focus', () => setActiveColorInput('layerText', layerTextColor)); 
+        // Clear target when focus is lost from relevant areas
+        document.addEventListener('click', (e) => {
+           // If click is outside the color controls section or the saved swatches, clear target
+           if (!e.target.closest('.color-input-targetable') && !e.target.closest('#universalSavedColorsSection')) {
+               clearActiveColorInputTarget();
+           }
+        }, true); // Use capture phase
 
-        addTextLayerBtn.addEventListener('click', () => addNewLayer('text'));
-        addImageLayerBtn.addEventListener('click', () => addNewLayer('image'));
+        saveActiveColorBtn.onclick = () => {
+            if (activeColorInputElement) addSavedColorToDB(activeColorInputElement.value);
+            else alert("Click a color input first (Brand, Background, or Layer Text) to select which color to save.");
+        };
 
-        layerNameInputCtrl.addEventListener('change', (e) => updateSelectedLayerProperty('name', e.target.value));
-        centerLayerBtn.addEventListener('click', centerSelectedLayer);
-        layerTextInput.addEventListener('input', (e) => updateSelectedLayerProperty('text', e.target.value));
-        layerTextSize.addEventListener('input', (e) => updateSelectedLayerProperty('fontSize', parseInt(e.target.value)));
-        layerTextColor.addEventListener('input', (e) => updateSelectedLayerProperty('color', e.target.value));
-        layerTextFont.addEventListener('change', (e) => updateSelectedLayerProperty('fontFamily', e.target.value));
-        layerTextShadow.addEventListener('change', (e) => updateSelectedLayerProperty('textShadowEnabled', e.target.checked));
-        
-        layerImageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            const layer = getSelectedLayer();
-            if (file && layer && layer.type === 'image') {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const newImageSrc = ev.target.result;
-                    updateSelectedLayerProperty('imageSrc', newImageSrc);
-                    const img = new Image();
-                    img.onload = () => {
-                        const currentWidth = parseFloat(layer.width) || img.naturalWidth;
-                        const aspectRatio = img.naturalHeight / img.naturalWidth;
-                        const newHeight = currentWidth * aspectRatio;
-                        updateSelectedLayerProperty('height', `${newHeight}px`);
-                        // Optionally update width too if it was 'auto' or similar
-                        // updateSelectedLayerProperty('width', `${currentWidth}px`);
-                    }
-                    img.src = newImageSrc;
-                };
-                reader.readAsDataURL(file);
-            }
-            layerImageUpload.value = ''; 
-        });
-        layerImageOpacity.addEventListener('input', (e) => updateSelectedLayerProperty('opacity', parseFloat(e.target.value)));
-
+        brandColorCtrl.oninput = () => { appState.brandKit.brandColor = brandColorCtrl.value; saveState(); };
+        brandLogoUploadCtrl.onchange = (e) => {
+            const f = e.target.files[0]; if (!f) return; const r = new FileReader();
+            r.onload = (ev) => { appState.brandKit.logoSrc = ev.target.result; renderBrandLogoWatermark(); saveState(); };
+            r.readAsDataURL(f); brandLogoUploadCtrl.value = '';
+        };
+        clearBrandLogoCtrl.onclick = () => { appState.brandKit.logoSrc = null; renderBrandLogoWatermark(); saveState(); };
+        brandLogoOpacityCtrl.oninput = () => { appState.brandKit.logoOpacity = parseFloat(brandLogoOpacityCtrl.value); renderBrandLogoWatermark(); saveState(); };
+        brandLogoSizeCtrl.oninput = () => { appState.brandKit.logoSize = parseInt(brandLogoSizeCtrl.value); renderBrandLogoWatermark(); saveState(); };
+        brandLogoPositionCtrl.onchange = () => { appState.brandKit.logoPosition = brandLogoPositionCtrl.value; renderBrandLogoWatermark(); saveState(); };
+        addTextLayerBtn.onclick = () => addNewLayer('text'); addImageLayerBtn.onclick = () => addNewLayer('image');
+        layerNameInputCtrl.oninput = (e) => updateSelectedLayerProperty('name', e.target.value);
+        centerLayerBtn.onclick = centerSelectedLayer;
+        layerTextInput.oninput = (e) => updateSelectedLayerProperty('text', e.target.value);
+        layerTextSize.oninput = (e) => updateSelectedLayerProperty('fontSize', parseInt(e.target.value));
+        layerTextColor.oninput = (e) => { const color = e.target.value; layerTextColorHex.value = color; updateSelectedLayerProperty('color', color);};
+        layerTextColorHex.onchange = (e) => {
+            let hex = e.target.value.trim(); if (!hex.startsWith('#')) hex = '#' + hex;
+            if (/^#[0-9A-Fa-f]{3}$|^#[0-9A-Fa-f]{6}$/.test(hex) && CSS.supports('color', hex)) { layerTextColor.value = hex; updateSelectedLayerProperty('color', hex); } 
+            else { layerTextColorHex.value = layerTextColor.value; }
+        };
+        layerTextFont.onchange = (e) => updateSelectedLayerProperty('fontFamily', e.target.value);
+        layerTextShadow.onchange = (e) => updateSelectedLayerProperty('textShadowEnabled', e.target.checked);
+        layerImageUpload.onchange = (e) => {
+            const f = e.target.files[0], l = getSelectedLayer(); if (!f || !l || l.type!=='image') return; const r = new FileReader();
+            r.onload = (ev) => {
+                const src = ev.target.result; updateSelectedLayerProperty('imageSrc', src);
+                const img = new Image(); img.onload = () => {
+                    if(img.naturalWidth===0) return; const w=parseFloat(l.width)||img.naturalWidth;
+                    l.height = `${(img.naturalHeight / img.naturalWidth) * w}px`;
+                    if(l.width==='auto'||!parseFloat(l.width)) l.width = `${Math.min(w,img.naturalWidth,canvasElement.offsetWidth*0.8)}px`;
+                    updateLayerElement(l); saveState(); 
+                }; img.src = src;
+            }; r.readAsDataURL(f); layerImageUpload.value = ''; 
+        };
+        layerImageOpacity.oninput = (e) => updateSelectedLayerProperty('opacity', parseFloat(e.target.value));
         const gs = appState.globalSettings; 
-        bgTopColorCtrl.addEventListener('input', () => { gs.bgTopColor = bgTopColorCtrl.value; updateBackgroundDisplay(); saveState(); });
-        bgBottomColorCtrl.addEventListener('input', () => { gs.bgBottomColor = bgBottomColorCtrl.value; updateBackgroundDisplay(); saveState(); });
-        bgOrientationCtrl.addEventListener('change', () => { gs.bgOrientation = bgOrientationCtrl.value; updateBackgroundDisplay(); saveState(); });
-        canvasPresetCtrl.addEventListener('change', () => { gs.canvasPreset = canvasPresetCtrl.value; updateCanvasDimensions(); saveState(); });
-        safeZoneToggleCtrl.addEventListener('change', () => { gs.safeZoneToggle = safeZoneToggleCtrl.checked; toggleSafeZoneVisibility(); saveState(); });
-        
-        exportPngBtn.addEventListener('click', handleExport);
+        bgTopColorCtrl.oninput = () => { gs.bgTopColor = bgTopColorCtrl.value; updateBackgroundDisplay(); saveState(); };
+        bgBottomColorCtrl.oninput = () => { gs.bgBottomColor = bgBottomColorCtrl.value; updateBackgroundDisplay(); saveState(); };
+        bgOrientationCtrl.onchange = () => { gs.bgOrientation = bgOrientationCtrl.value; updateBackgroundDisplay(); saveState(); };
+        readAloudBtn.onclick = readTextAloud; // Hook up TTS button
+        canvasPresetCtrl.onchange = () => { gs.canvasPreset = canvasPresetCtrl.value; updateCanvasDimensions(); saveState(); };
+        safeZoneToggleCtrl.onchange = () => { gs.safeZoneToggle = safeZoneToggleCtrl.checked; toggleSafeZoneVisibility(); saveState(); };
+        exportPngBtn.onclick = handleExport;
         new ResizeObserver(renderBrandLogoWatermark).observe(canvasElement);
     }
-
     function makeDraggable(layerElement, layerObject) {
-        let isDragging = false, isResizing = false;
-        let startX, startY, initialLeft, initialTop, initialWidth, initialHeight;
-        let dragListening = false, resizeListening = false;
-        let resizeHandle = layerElement.querySelector('.resize-handle');
-
+        let isDragging = false, isResizing = false; let startX, startY, initialLeft, initialTop, initialWidth, initialHeight;
+        let dragListening = false, resizeListening = false; let resizeHandle = layerElement.querySelector('.resize-handle');
         const onPointerDown = (e) => {
-            if (e.pointerType === 'mouse' && e.button !== 0) return;
-            if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id);
-             // Check again after selectLayer, as it might not select if there's an issue
-            if (appState.selectedLayerId !== layerObject.id) return;
-
-
-            e.preventDefault(); isDragging = true;
-            startX = e.clientX; startY = e.clientY;
-            initialLeft = layerElement.offsetLeft; initialTop = layerElement.offsetTop;
-            if (!dragListening) {
-                document.addEventListener('pointermove', onPointerMove);
-                document.addEventListener('pointerup', onDragUp);
-                dragListening = true;
-            }
-            try { layerElement.setPointerCapture(e.pointerId); } catch(err) {}
+            if (e.pointerType === 'mouse' && e.button !== 0) return; if (resizeHandle && e.target === resizeHandle) return;
+            if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id); if (appState.selectedLayerId !== layerObject.id) return;
+            e.preventDefault(); isDragging = true; startX = e.clientX; startY = e.clientY; initialLeft = layerElement.offsetLeft; initialTop = layerElement.offsetTop;
+            if (!dragListening) { document.addEventListener('pointermove', onPointerMove); document.addEventListener('pointerup', onDragUp); dragListening = true; } try { layerElement.setPointerCapture(e.pointerId); } catch(err) {}
         };
-
         const onPointerMove = (e) => {
-            if (!isDragging) return;
-            layerObject.left = `${initialLeft + (e.clientX - startX)}px`;
-            layerObject.top = `${initialTop + (e.clientY - startY)}px`;
-            layerElement.style.left = layerObject.left;
-            layerElement.style.top = layerObject.top;
+            if (!isDragging) return; layerObject.left = `${initialLeft+(e.clientX-startX)}px`; layerObject.top = `${initialTop+(e.clientY-startY)}px`;
+            layerElement.style.left = layerObject.left; layerElement.style.top = layerObject.top;
         };
-
         const onDragUp = (e) => {
-            if (isDragging) { isDragging = false; saveState(); }
-            if (dragListening) {
-                document.removeEventListener('pointermove', onPointerMove);
-                document.removeEventListener('pointerup', onDragUp);
-                dragListening = false;
-            }
-            try { if (layerElement.hasPointerCapture(e.pointerId)) layerElement.releasePointerCapture(e.pointerId); } catch(err) {}
+            if (isDragging) { isDragging=false; saveState(); } if (dragListening) {
+                document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onDragUp); dragListening = false;
+            } try { if (layerElement.hasPointerCapture(e.pointerId)) layerElement.releasePointerCapture(e.pointerId); } catch(err) {}
         };
         layerElement.addEventListener('pointerdown', onPointerDown);
-
-        // Add resize handle for images, or text if fixed size (not implemented for text here)
         if (layerObject.type === 'image') {
-            if (!resizeHandle) {
-                resizeHandle = document.createElement('span');
-                resizeHandle.classList.add('resize-handle');
-                layerElement.appendChild(resizeHandle);
-            }
-            resizeHandle.style.display = 'block'; // Ensure it's visible
-
+            if (!resizeHandle) { resizeHandle = document.createElement('span'); resizeHandle.classList.add('resize-handle'); layerElement.appendChild(resizeHandle); }
+            resizeHandle.style.display = 'block'; 
             const onResizeDown = (e) => {
-                if (e.pointerType === 'mouse' && e.button !== 0) return;
-                if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id);
-                if (appState.selectedLayerId !== layerObject.id) return;
-
-                e.preventDefault(); e.stopPropagation(); isResizing = true;
-                startX = e.clientX; startY = e.clientY;
-                initialWidth = layerElement.offsetWidth; initialHeight = layerElement.offsetHeight;
-                if (!resizeListening) {
-                    document.addEventListener('pointermove', onResizeMove);
-                    document.addEventListener('pointerup', onResizeUp);
-                    resizeListening = true;
-                }
-                try { resizeHandle.setPointerCapture(e.pointerId); } catch(err) {}
+                if (e.pointerType === 'mouse' && e.button !== 0) return; if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id);
+                if (appState.selectedLayerId !== layerObject.id) return; e.preventDefault(); e.stopPropagation(); isResizing = true;
+                startX = e.clientX; startY = e.clientY; initialWidth = layerElement.offsetWidth; initialHeight = layerElement.offsetHeight;
+                if (!resizeListening) { document.addEventListener('pointermove', onResizeMove); document.addEventListener('pointerup', onResizeUp); resizeListening = true; } try { resizeHandle.setPointerCapture(e.pointerId); } catch(err) {}
             };
             const onResizeMove = (e) => {
-                if (!isResizing) return;
-                let newWidth = initialWidth + (e.clientX - startX);
-                let newHeight = initialHeight + (e.clientY - startY);
-                if (newWidth < 20) newWidth = 20; if (newHeight < 20) newHeight = 20;
-                layerObject.width = `${newWidth}px`; layerObject.height = `${newHeight}px`;
-                layerElement.style.width = layerObject.width; layerElement.style.height = layerObject.height;
+                if (!isResizing) return; let newW = initialWidth+(e.clientX-startX), newH = initialHeight+(e.clientY-startY);
+                if (newW<20)newW=20; if(newH<20)newH=20; layerObject.width=`${newW}px`;layerObject.height=`${newH}px`;
+                layerElement.style.width=layerObject.width; layerElement.style.height=layerObject.height;
             };
             const onResizeUp = (e) => {
-                if (isResizing) { isResizing = false; saveState(); }
-                if (resizeListening) {
-                    document.removeEventListener('pointermove', onResizeMove);
-                    document.removeEventListener('pointerup', onResizeUp);
-                    resizeListening = false;
-                }
-                try { if (resizeHandle.hasPointerCapture(e.pointerId)) resizeHandle.releasePointerCapture(e.pointerId); } catch(err) {}
+                if(isResizing){isResizing=false;saveState();} if(resizeListening){ document.removeEventListener('pointermove',onResizeMove);document.removeEventListener('pointerup',onResizeUp);resizeListening=false; } 
+                try{if(resizeHandle.hasPointerCapture(e.pointerId))resizeHandle.releasePointerCapture(e.pointerId);}catch(err){}
             };
             resizeHandle.addEventListener('pointerdown', onResizeDown);
-        } else if (resizeHandle) { // Hide handle for non-resizable types like current text
-            resizeHandle.style.display = 'none';
-        }
+        } else if (resizeHandle) { resizeHandle.style.display = 'none'; }
     }
-
     async function handleExport() {
-        const originalSafeZoneDisplay = safeZoneElement.style.display;
-        safeZoneElement.style.display = 'none'; 
-        const selectedCanvasEl = canvasElement.querySelector('.selected-on-canvas');
-        if (selectedCanvasEl) selectedCanvasEl.classList.remove('selected-on-canvas');
-
+        const origSafeDisp = safeZoneElement.style.display; safeZoneElement.style.display = 'none'; 
+        const selCanvasEl = canvasElement.querySelector('.selected-on-canvas'); if (selCanvasEl) selCanvasEl.classList.remove('selected-on-canvas');
+        clearActiveColorInputTarget(); // Ensure no focus outline during export
         try {
-            if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
-            renderBrandLogoWatermark(); // Ensure logo is up-to-date before export
-            await new Promise(resolve => setTimeout(resolve, 150)); // Ensure DOM updates apply
-
-            const canvasOutput = await html2canvas(canvasElement, { 
-                backgroundColor: null, logging: false, useCORS: true,
-                onclone: (clonedDoc) => {
-                    const clonedCanvas = clonedDoc.getElementById('canvasElement');
-                    if (clonedCanvas) clonedCanvas.style.backgroundImage = canvasElement.style.backgroundImage;
-                }
-            });
-            
-            const dataUrl = canvasOutput.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = `viral-creation-${Date.now()}.png`;
-            link.href = dataUrl;
-            link.click();
-        } catch (err) {
-            console.error("Export failed:", err);
-            alert("Sorry, image export failed. Please try again.");
-        } finally {
-            safeZoneElement.style.display = originalSafeZoneDisplay; 
-            if (selectedCanvasEl) selectedCanvasEl.classList.add('selected-on-canvas'); 
-        }
+            if(document.activeElement && typeof document.activeElement.blur === 'function')document.activeElement.blur();
+            renderBrandLogoWatermark(); await new Promise(r => setTimeout(r, 150)); 
+            const cvsOut = await html2canvas(canvasElement, {backgroundColor:null,logging:false,useCORS:true, onclone:(cloneDoc)=>{
+                const clnCvs = cloneDoc.getElementById('canvasElement'); if(clnCvs)clnCvs.style.backgroundImage = canvasElement.style.backgroundImage;
+            }});
+            const dataUrl = cvsOut.toDataURL('image/png'), link = document.createElement('a');
+            link.download = `viral-creation-${Date.now()}.png`; link.href = dataUrl; link.click();
+        } catch (err) { console.error("Export failed:", err); alert("Image export failed."); } 
+        finally { safeZoneElement.style.display = origSafeDisp; if (selCanvasEl) selCanvasEl.classList.add('selected-on-canvas'); }
     }
-
-    function initializeApp() {
-        loadState();
-        updateGlobalControlsDisplay(); 
-        updateBrandKitDisplay(); 
-        renderAllLayersOnCanvas(); 
-        renderLayerPanel();
-        updateSelectedLayerControls(); 
-        setupEventListeners();
-        if (!appState.selectedLayerId && appState.layers.length > 0) {
-            selectLayer(appState.layers[appState.layers.length - 1].id);
-        } else if (appState.selectedLayerId && !getSelectedLayer()) { // Selected layer ID exists but layer doesn't
-            appState.selectedLayerId = null; // Clear invalid selection
-            if (appState.layers.length > 0) { // Select top layer if any
-                 selectLayer(appState.layers[appState.layers.length - 1].id);
-            } else {
-                updateSelectedLayerControls(); // Hide controls if no layers
+    async function initializeApp() {
+        try {
+            await initDB(); 
+            loadState();
+            updateGlobalControlsDisplay(); updateBrandKitDisplay(); renderAllLayersOnCanvas(); renderLayerPanel();
+            updateSelectedLayerControls(); setupEventListeners(); 
+            await loadAndRenderUniversalSavedColors(); // Load saved colors after DB init
+            if (!appState.selectedLayerId && appState.layers.length > 0) selectLayer(appState.layers[appState.layers.length - 1].id);
+            else if (appState.selectedLayerId && !getSelectedLayer()) { 
+                appState.selectedLayerId = null; 
+                if (appState.layers.length > 0) selectLayer(appState.layers[appState.layers.length - 1].id); else updateSelectedLayerControls(); 
             }
+        } catch(error) {
+             console.error("Initialization failed:", error);
+             // Provide fallback or error message to user if needed
         }
     }
     initializeApp();
