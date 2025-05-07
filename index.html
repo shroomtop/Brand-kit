@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Viral Creator Editor Pro - Universal Colors & TTS</title>
+  <title>Viral Creator Editor Pro - Templates & Effects</title>
 
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'none';
@@ -26,37 +26,33 @@
     .control-group button { flex: 1; }
     .layer-item { padding: 0.5rem; border: 1px solid #4A5568; border-radius: 0.25rem; margin-bottom: 0.5rem; cursor: pointer; background-color: #2D3748; transition: background-color 0.2s; display: flex; justify-content: space-between; align-items: center; }
     .layer-item.selected { background-color: #4299e1; border-color: #63b3ed; }
-    .layer-item:hover { background-color: #4A5568; }
+    .layer-item.locked { background-color: #384152; cursor: not-allowed; } /* Style for locked */
+    .layer-item:hover:not(.locked) { background-color: #4A5568; }
     .layer-name { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
     .layer-controls { display: flex; align-items: center; gap: 0.25rem; }
     .layer-controls button { background: none; border: none; color: white; cursor: pointer; padding: 0.25rem; font-size: 0.875rem; }
     .draggable-layer { position: absolute; cursor: move; touch-action: none; box-sizing: border-box; }
-    .draggable-layer.selected-on-canvas { outline: 2px dashed #4299e1; }
-    .draggable-layer img { pointer-events: none; width: 100%; height: 100%; object-fit: contain; }
+    .draggable-layer.selected-on-canvas:not(.layer-locked-on-canvas) { outline: 2px dashed #4299e1; }
+    .draggable-layer.layer-locked-on-canvas { cursor: not-allowed; outline: 1px dashed #a0aec0; /* gray-400 */ }
+     .draggable-layer img { pointer-events: none; width: 100%; height: 100%; object-fit: contain; }
     .brand-logo-watermark { position: absolute; pointer-events: none; opacity: 0.7; }
-    #universalSavedColorsSection { padding: 0.5rem; background-color: #1A202C; border-radius: 0.25rem; margin-top: 0.5rem; }
+    #universalSavedColorsSection, #templatesSection { padding: 0.75rem; background-color: #1A202C; border-radius: 0.25rem; margin-top: 0.5rem; }
     .color-swatch-container { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; }
     .color-swatch { width: 24px; height: 24px; border-radius: 4px; border: 1px solid #666; cursor: pointer; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
     .color-swatch:hover .delete-swatch-btn { display: flex; justify-content: center; align-items: center; }
     .delete-swatch-btn { display: none; position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; background-color: #ef4444; color: white; border: none; border-radius: 50%; font-size: 12px; line-height: 18px; text-align: center; cursor: pointer; padding: 0; font-weight: bold; }
     input[type="color"].targeted-for-saved-color { outline: 2px solid #63b3ed; box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.5); }
-    .tts-button { /* Styling for the new TTS button */
-      background-color: #7c3aed; /* purple-600 */
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.25rem;
-      font-size: 0.875rem;
-      text-align: center;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-    .tts-button:hover { background-color: #6d28d9; /* purple-700 */ }
+    .tts-button { background-color: #7c3aed; color: white; padding: 0.5rem 1rem; border-radius: 0.25rem; font-size: 0.875rem; text-align: center; cursor: pointer; transition: background-color 0.2s; border: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .tts-button:hover { background-color: #6d28d9; }
     .tts-button:disabled { background-color: #585065; cursor: not-allowed; }
+    /* Simple range input styling */
+    input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #4a5568; border-radius: 5px; outline: none; opacity: 0.7; transition: opacity .2s; }
+    input[type=range]:hover { opacity: 1; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: #a0aec0; border-radius: 50%; cursor: pointer; }
+    input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: #a0aec0; border-radius: 50%; cursor: pointer; border: none; }
+    .filter-control label { flex-basis: 70px; text-align: right; } /* Align filter labels */
+    .filter-control input[type=range] { flex-grow: 1; }
+    .filter-control span { min-width: 35px; text-align: right; font-size: 0.75rem;} /* Value display */
   </style>
 </head>
 <body class="min-h-screen bg-gray-900 text-white flex flex-col lg:flex-row gap-6 p-4">
@@ -64,10 +60,31 @@
 <aside class="w-full max-w-sm space-y-6">
   <section id="universalSavedColorsSection" class="space-y-2">
     <h3 class="text-md font-semibold tracking-wide">Saved Colors</h3>
-    <div class="text-xs text-gray-400 mb-2">Click a color input below, then click a swatch to apply.</div>
-    <div id="universalSavedColorsContainer" class="color-swatch-container">
-        </div>
+    <div class="text-xs text-gray-400 mb-2">Click a color input, then click a swatch.</div>
+    <div id="universalSavedColorsContainer" class="color-swatch-container"></div>
     <button id="saveActiveColorBtn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded text-xs transition">Save Active Color</button>
+  </section>
+
+  <section id="templatesSection" class="space-y-3">
+    <h3 class="text-md font-semibold tracking-wide">Templates</h3>
+    <div class="flex flex-col gap-2">
+        <input type="text" id="saveTemplateNameInput" placeholder="Template Name" class="w-full bg-gray-800 rounded p-1 text-sm">
+        <button id="saveTemplateBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-1 px-3 rounded text-sm transition">Save Current as Template</button>
+    </div>
+    <div class="space-y-1">
+        <label for="loadTemplateSelect" class="text-sm">Load Template:</label>
+        <div class="flex gap-2">
+            <select id="loadTemplateSelect" class="flex-grow bg-gray-800 rounded p-1 text-sm"></select>
+            <button id="loadTemplateBtn" title="Load Selected Template" class="bg-sky-600 hover:bg-sky-700 p-1 rounded transition">🔄</button>
+            <button id="deleteTemplateBtn" title="Delete Selected Template" class="bg-red-600 hover:bg-red-700 p-1 rounded transition">🗑️</button>
+        </div>
+    </div>
+     <div class="flex gap-2 text-sm">
+        <button id="exportTemplateBtn" class="flex-1 border border-gray-600 hover:bg-gray-700 py-1 px-3 rounded transition">Export</button>
+        <label class="flex-1 border border-gray-600 hover:bg-gray-700 py-1 px-3 rounded transition cursor-pointer text-center">
+            Import <input type="file" id="importTemplateInput" accept=".json" class="hidden">
+        </label>
+    </div>
   </section>
 
   <section class="space-y-2">
@@ -80,25 +97,14 @@
         <input type="file" id="brandLogoUploadCtrl" accept="image/png, image/jpeg, image/svg+xml" class="w-full text-sm file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600">
         <button id="clearBrandLogoCtrl" class="text-xs text-red-400 hover:text-red-300 mt-1">Clear Logo</button>
     </div>
-     <div class="flex items-center gap-2">
-      <label class="flex-1 text-sm">Logo Opacity</label><input type="range" id="brandLogoOpacityCtrl" min="0" max="1" step="0.05" value="0.7" class="flex-[2]">
-    </div>
-    <div class="flex items-center gap-2">
-      <label class="flex-1 text-sm">Logo Size (%)</label><input type="range" id="brandLogoSizeCtrl" min="5" max="50" step="1" value="15" class="flex-[2]">
-    </div>
-    <select id="brandLogoPositionCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
-        <option value="bottom-right">Bottom Right</option>
-        <option value="bottom-left">Bottom Left</option>
-        <option value="top-right">Top Right</option>
-        <option value="top-left">Top Left</option>
-        <option value="center">Center</option>
-    </select>
+     <div class="flex items-center gap-2"><label class="flex-1 text-sm">Logo Opacity</label><input type="range" id="brandLogoOpacityCtrl" min="0" max="1" step="0.05" value="0.7" class="flex-[2]"></div>
+     <div class="flex items-center gap-2"><label class="flex-1 text-sm">Logo Size (%)</label><input type="range" id="brandLogoSizeCtrl" min="5" max="50" step="1" value="15" class="flex-[2]"></div>
+     <select id="brandLogoPositionCtrl" class="w-full bg-gray-800 rounded p-2 text-sm"><option value="bottom-right">Bottom Right</option><option value="bottom-left">Bottom Left</option><option value="top-right">Top Right</option><option value="top-left">Top Left</option><option value="center">Center</option></select>
   </section>
 
   <section class="space-y-2">
     <h2 class="text-lg font-bold tracking-wide">Layers</h2>
-    <div id="layerPanel" class="max-h-60 overflow-y-auto bg-gray-800 p-2 rounded">
-        </div>
+    <div id="layerPanel" class="max-h-60 overflow-y-auto bg-gray-800 p-2 rounded"></div>
     <div class="flex gap-2">
         <button id="addTextLayerBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm transition">Add Text</button>
         <button id="addImageLayerBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded text-sm transition">Add Image Layer</button>
@@ -107,92 +113,58 @@
   
   <section id="selectedLayerControlsSection" class="space-y-2 hidden">
     <h2 class="text-lg font-bold tracking-wide">Edit Layer: <span id="selectedLayerName" class="font-normal"></span></h2>
-     <div class="flex items-center gap-2">
-        <label class="flex-1 text-sm">Layer Name</label>
-        <input type="text" id="layerNameInputCtrl" class="flex-[2] bg-gray-800 rounded p-1 text-sm">
-    </div>
-    <div class="flex items-center gap-2 control-group">
-        <button id="centerLayerBtn" class="bg-sky-600 hover:bg-sky-700 text-white py-1 px-3 rounded text-sm transition">Center Layer</button>
-    </div>
-    <div id="textLayerControls" class="space-y-2 hidden">
+     <div class="flex items-center gap-2"><label class="flex-1 text-sm">Layer Name</label><input type="text" id="layerNameInputCtrl" class="flex-[2] bg-gray-800 rounded p-1 text-sm"></div>
+     <div class="flex items-center gap-2 control-group"><button id="centerLayerBtn" class="bg-sky-600 hover:bg-sky-700 text-white py-1 px-3 rounded text-sm transition">Center</button></div>
+    
+     <div id="textLayerControls" class="space-y-2 hidden">
         <textarea id="layerTextInput" rows="2" class="w-full rounded p-2 text-black text-sm" placeholder="Enter text..."></textarea>
         <div class="flex items-center gap-2"><label class="flex-1 text-sm">Size</label><input type="range" min="10" max="200" value="32" id="layerTextSize" class="flex-[2]"></div>
-        <div class="flex items-center gap-2">
-            <label class="flex-1 text-sm">Color</label>
-            <input type="color" id="layerTextColor" value="#ffffff" class="h-8 w-10 p-0 border-none color-input-targetable">
-            <input type="text" id="layerTextColorHex" placeholder="#RRGGBB" class="flex-[1] bg-gray-800 rounded p-1 text-sm h-8">
-        </div>
+        <div class="flex items-center gap-2"><label class="flex-1 text-sm">Color</label><input type="color" id="layerTextColor" value="#ffffff" class="h-8 w-10 p-0 border-none color-input-targetable"><input type="text" id="layerTextColorHex" placeholder="#RRGGBB" class="flex-[1] bg-gray-800 rounded p-1 text-sm h-8"></div>
+        <div class="flex items-center gap-2"><label class="flex-1 text-sm">Stroke Width</label><input type="range" min="0" max="10" step="0.5" value="0" id="layerTextStrokeWidth" class="flex-[2]"></div>
+        <div class="flex items-center gap-2"><label class="flex-1 text-sm">Stroke Color</label><input type="color" id="layerTextStrokeColor" value="#000000" class="h-8 w-16 color-input-targetable"></div>
         <select id="layerTextFont" class="w-full bg-gray-800 rounded p-2 text-sm">
-            <option value="'Inter', sans-serif" selected>Inter (Sans-Serif)</option>
-            <option value="'Anton', sans-serif">Anton (Display)</option>
-            <option value="'Bangers', cursive">Bangers (Display)</option>
-            <option value="'Lato', sans-serif">Lato (Sans-Serif)</option>
-            <option value="'Lobster', cursive">Lobster (Script)</option>
-            <option value="'Merriweather', serif">Merriweather (Serif)</option>
-            <option value="'Montserrat', sans-serif">Montserrat (Sans-Serif)</option>
-            <option value="'Noto Sans', sans-serif">Noto Sans (Global)</option>
-            <option value="'Noto Serif', serif">Noto Serif (Global Serif)</option>
-            <option value="'Nunito', sans-serif">Nunito (Sans-Serif)</option>
-            <option value="'Open Sans', sans-serif">Open Sans (Sans-Serif)</option>
-            <option value="'Oswald', sans-serif">Oswald (Display)</option>
-            <option value="'Pacifico', cursive">Pacifico (Script)</option>
-            <option value="'Playfair Display', serif">Playfair Display (Serif)</option>
-            <option value="'Poppins', sans-serif">Poppins (Sans-Serif)</option>
-            <option value="'Raleway', sans-serif">Raleway (Sans-Serif)</option>
-            <option value="'Roboto Condensed', sans-serif">Roboto Condensed</option>
-            <option value="'Roboto Mono', monospace">Roboto Mono (Monospace)</option>
-            <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
-            <option value="'Ubuntu', sans-serif">Ubuntu (Sans-Serif)</option>
+            <option value="'Inter', sans-serif" selected>Inter</option><option value="'Anton', sans-serif">Anton</option><option value="'Bangers', cursive">Bangers</option><option value="'Lato', sans-serif">Lato</option><option value="'Lobster', cursive">Lobster</option><option value="'Merriweather', serif">Merriweather</option><option value="'Montserrat', sans-serif">Montserrat</option><option value="'Noto Sans', sans-serif">Noto Sans</option><option value="'Noto Serif', serif">Noto Serif</option><option value="'Nunito', sans-serif">Nunito</option><option value="'Open Sans', sans-serif">Open Sans</option><option value="'Oswald', sans-serif">Oswald</option><option value="'Pacifico', cursive">Pacifico</option><option value="'Playfair Display', serif">Playfair Display</option><option value="'Poppins', sans-serif">Poppins</option><option value="'Raleway', sans-serif">Raleway</option><option value="'Roboto Condensed', sans-serif">Roboto Condensed</option><option value="'Roboto Mono', monospace">Roboto Mono</option><option value="'Source Sans Pro', sans-serif">Source Sans Pro</option><option value="'Ubuntu', sans-serif">Ubuntu</option>
         </select>
         <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="layerTextShadow" class="accent-emerald-500"> Shadow</label>
     </div>
+    
     <div id="imageLayerControls" class="space-y-2 hidden">
         <label class="text-sm">Replace Image</label>
         <input type="file" id="layerImageUpload" accept="image/*" class="w-full text-sm file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600">
         <div class="flex items-center gap-2"><label class="flex-1 text-sm">Opacity</label><input type="range" id="layerImageOpacity" min="0" max="1" step="0.05" value="1" class="flex-[2]"></div>
+        <h4 class="text-sm font-medium pt-2">Filters:</h4>
+        <div class="flex items-center gap-2 filter-control"><label>Blur</label><input type="range" id="filterBlur" min="0" max="20" step="1" value="0"><span id="filterBlurValue">0px</span></div>
+        <div class="flex items-center gap-2 filter-control"><label>Brightness</label><input type="range" id="filterBrightness" min="0" max="2" step="0.05" value="1"><span id="filterBrightnessValue">100%</span></div>
+        <div class="flex items-center gap-2 filter-control"><label>Contrast</label><input type="range" id="filterContrast" min="0" max="2" step="0.05" value="1"><span id="filterContrastValue">100%</span></div>
+        <div class="flex items-center gap-2 filter-control"><label>Grayscale</label><input type="range" id="filterGrayscale" min="0" max="1" step="0.05" value="0"><span id="filterGrayscaleValue">0%</span></div>
+        <div class="flex items-center gap-2 filter-control"><label>Sepia</label><input type="range" id="filterSepia" min="0" max="1" step="0.05" value="0"><span id="filterSepiaValue">0%</span></div>
+        <button id="resetImageFiltersBtn" class="w-full border border-gray-600 hover:bg-gray-700 text-xs py-1 rounded transition">Reset Filters</button>
     </div>
   </section>
 
   <section class="space-y-2">
     <h2 class="text-lg font-bold tracking-wide">Background</h2>
-    <div class="flex items-center gap-2">
-      <label class="flex-1 text-sm">Top</label><input type="color" id="bgTopColorCtrl" value="#ffcc00" class="h-8 w-16 color-input-targetable">
-      <label class="flex-1 text-sm">Bottom</label><input type="color" id="bgBottomColorCtrl" value="#ff6600" class="h-8 w-16 color-input-targetable">
-    </div>
-    <select id="bgOrientationCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
-      <option value="to-b">Vertical</option><option value="to-r">Horizontal</option>
-      <option value="to-tr">Diagonal ↗︎</option><option value="to-br">Diagonal ↘︎</option>
-    </select>
+    <div class="flex items-center gap-2"><label class="flex-1 text-sm">Top</label><input type="color" id="bgTopColorCtrl" value="#ffcc00" class="h-8 w-16 color-input-targetable"><label class="flex-1 text-sm">Bottom</label><input type="color" id="bgBottomColorCtrl" value="#ff6600" class="h-8 w-16 color-input-targetable"></div>
+    <select id="bgOrientationCtrl" class="w-full bg-gray-800 rounded p-2 text-sm"><option value="to-b">Vertical</option><option value="to-r">Horizontal</option><option value="to-tr">Diagonal ↗︎</option><option value="to-br">Diagonal ↘︎</option></select>
   </section>
 
   <section class="space-y-2">
     <h2 class="text-lg font-bold tracking-wide">Utilities</h2>
-    <button id="readAloudBtn" class="w-full tts-button">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
-        <span>Read Text Aloud</span>
-    </button>
+    <button id="readAloudBtn" class="w-full tts-button"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg><span>Read Text Aloud</span></button>
   </section>
 
   <section class="space-y-2">
     <h2 class="text-lg font-bold tracking-wide">Canvas & Export</h2>
-    <select id="canvasPresetCtrl" class="w-full bg-gray-800 rounded p-2 text-sm">
-      <option value="360x640">Phone Preview (360×640 - 9:16)</option>
-      <option value="1080x1920">YouTube Short (1080×1920 - 9:16)</option>
-      <option value="1080x1080">Square (1080×1080 - 1:1)</option>
-    </select>
-    <label class="inline-flex items-center gap-2 text-sm">
-      <input type="checkbox" id="safeZoneToggleCtrl" checked class="accent-emerald-500"><span>Show Safe Zone</span>
-    </label>
+    <select id="canvasPresetCtrl" class="w-full bg-gray-800 rounded p-2 text-sm"><option value="360x640">Phone (9:16)</option><option value="1080x1920">Short (9:16)</option><option value="1080x1080">Square (1:1)</option></select>
+    <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" id="safeZoneToggleCtrl" checked class="accent-emerald-500"><span>Show Safe Zone</span></label>
     <button id="exportPngBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded shadow transition">Export PNG</button>
-    <div class="text-xs text-gray-400 mt-1">Video export with audio is complex; use the 'Read Aloud' button for TTS playback.</div>
+    <button id="sharePngBtn" class="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white py-1 rounded shadow transition text-sm hidden">Share PNG</button>
+    <div class="text-xs text-gray-400 mt-1">Video export is complex; use 'Read Aloud' for TTS.</div>
   </section>
 </aside>
 
 <main class="flex-1 flex justify-center items-start pt-4 lg:pt-0">
-  <div id="canvasWrapper" class="relative border border-white rounded overflow-hidden shadow-lg bg-gray-700"
-       style="width:var(--canvas-w); height:var(--canvas-h)">
+  <div id="canvasWrapper" class="relative border border-white rounded overflow-hidden shadow-lg bg-gray-700" style="width:var(--canvas-w); height:var(--canvas-h)">
     <div id="canvasElement" class="w-full h-full select-none relative overflow-hidden">
       <div id="safeZoneElement" class="absolute inset-0 safe-zone-overlay hidden"></div>
       <img id="brandLogoWatermarkElement" class="brand-logo-watermark hidden" alt="Brand Logo">
@@ -202,29 +174,23 @@
 
 <script>
 'use strict';
-
 (function() {
     // --- DOM Element Selectors ---
     const getEl = id => document.getElementById(id);
-
     const canvasElement = getEl('canvasElement'); 
     const safeZoneElement = getEl('safeZoneElement');
     const brandLogoWatermarkElement = getEl('brandLogoWatermarkElement');
-    
     const universalSavedColorsContainer = getEl('universalSavedColorsContainer');
     const saveActiveColorBtn = getEl('saveActiveColorBtn');
-
     const brandColorCtrl = getEl('brandColorCtrl');
     const brandLogoUploadCtrl = getEl('brandLogoUploadCtrl');
     const clearBrandLogoCtrl = getEl('clearBrandLogoCtrl');
     const brandLogoOpacityCtrl = getEl('brandLogoOpacityCtrl');
     const brandLogoSizeCtrl = getEl('brandLogoSizeCtrl');
     const brandLogoPositionCtrl = getEl('brandLogoPositionCtrl');
-
     const layerPanel = getEl('layerPanel');
     const addTextLayerBtn = getEl('addTextLayerBtn');
     const addImageLayerBtn = getEl('addImageLayerBtn');
-    
     const selectedLayerControlsSection = getEl('selectedLayerControlsSection');
     const selectedLayerName = getEl('selectedLayerName');
     const layerNameInputCtrl = getEl('layerNameInputCtrl');
@@ -234,199 +200,308 @@
     const layerTextSize = getEl('layerTextSize');
     const layerTextColor = getEl('layerTextColor'); 
     const layerTextColorHex = getEl('layerTextColorHex'); 
+    const layerTextStrokeWidth = getEl('layerTextStrokeWidth');
+    const layerTextStrokeColor = getEl('layerTextStrokeColor');
     const layerTextFont = getEl('layerTextFont');
     const layerTextShadow = getEl('layerTextShadow');
     const imageLayerControls = getEl('imageLayerControls');
     const layerImageUpload = getEl('layerImageUpload');
     const layerImageOpacity = getEl('layerImageOpacity');
-
+    const filterBlur = getEl('filterBlur'); const filterBlurValue = getEl('filterBlurValue');
+    const filterBrightness = getEl('filterBrightness'); const filterBrightnessValue = getEl('filterBrightnessValue');
+    const filterContrast = getEl('filterContrast'); const filterContrastValue = getEl('filterContrastValue');
+    const filterGrayscale = getEl('filterGrayscale'); const filterGrayscaleValue = getEl('filterGrayscaleValue');
+    const filterSepia = getEl('filterSepia'); const filterSepiaValue = getEl('filterSepiaValue');
+    const resetImageFiltersBtn = getEl('resetImageFiltersBtn');
     const bgTopColorCtrl = getEl('bgTopColorCtrl');
     const bgBottomColorCtrl = getEl('bgBottomColorCtrl');
     const bgOrientationCtrl = getEl('bgOrientationCtrl');
-    const readAloudBtn = getEl('readAloudBtn'); // TTS Button
+    const readAloudBtn = getEl('readAloudBtn'); 
     const canvasPresetCtrl = getEl('canvasPresetCtrl');
     const safeZoneToggleCtrl = getEl('safeZoneToggleCtrl');
     const exportPngBtn = getEl('exportPngBtn');
+    const sharePngBtn = getEl('sharePngBtn');
+    const saveTemplateNameInput = getEl('saveTemplateNameInput');
+    const saveTemplateBtn = getEl('saveTemplateBtn');
+    const loadTemplateSelect = getEl('loadTemplateSelect');
+    const loadTemplateBtn = getEl('loadTemplateBtn');
+    const deleteTemplateBtn = getEl('deleteTemplateBtn');
+    const exportTemplateBtn = getEl('exportTemplateBtn');
+    const importTemplateInput = getEl('importTemplateInput');
 
-    const APP_STORAGE_KEY = 'viralCreatorProState_v6_universalColors';
+    const APP_STATE_KEY = 'viralCreatorProState_v7_templatesEffects';
+    const TEMPLATE_DB_NAME = 'ViralCreatorTemplateDB';
+    const TEMPLATE_DB_VERSION = 1;
+    const TEMPLATE_STORE_NAME = 'userTemplates';
+    const COLOR_DB_NAME = 'ViralCreatorColorDB_v2';
+    const COLOR_DB_VERSION = 1;
+    const COLOR_STORE_NAME = 'universalUserPalette';
+
     let appState = {};
+    let layerIdCounter = 0;
+    let activeColorInputTarget = null; 
+    let activeColorInputElement = null; 
+    let colorDB, templateDB; // Hold DB instances
+    let lastExportedBlob = null; // For Web Share API
 
+    const defaultLayerProps = {
+        text: { fontSize: 32, color: '#ffffff', fontFamily: "'Inter', sans-serif", textShadowEnabled: true, textStroke: { color: '#000000', width: 0 }, text: 'New Text', width: 'auto', height: 'auto' },
+        image: { imageSrc: null, opacity: 1, width: '150px', height: '100px', filters: { blur: 0, brightness: 1, contrast: 1, grayscale: 0, sepia: 0 } }
+    };
     const defaultState = {
         brandKit: { brandColor: '#00A0D2', logoSrc: null, logoOpacity: 0.7, logoSize: 15, logoPosition: 'bottom-right' },
         layers: [], 
         selectedLayerId: null,
         globalSettings: { bgTopColor: '#1a202c', bgBottomColor: '#2d3748', bgOrientation: 'to-b', canvasPreset: '360x640', safeZoneToggle: true }
     };
-    
-    let layerIdCounter = 0;
-    let activeColorInputTarget = null; // Track symbolic name ('brand', 'bgTop', etc.)
-    let activeColorInputElement = null; // Track the actual <input type="color"> element
 
-    // --- IndexedDB Setup for Saved Colors ---
-    const DB_NAME = 'ViralCreatorColorDB_v2';
-    const DB_VERSION = 1;
-    const COLOR_STORE_NAME = 'universalUserPalette';
-    let db;
-
-    async function initDB() {
+    // --- IndexedDB Utilities ---
+    async function initDB(dbName, version, storeName, keyPath = 'id') {
         return new Promise((resolve, reject) => {
-            if (db) return resolve(db); // Already initialized
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onerror = (event) => reject("IndexedDB error: " + request.error);
-            request.onsuccess = (event) => { db = request.result; resolve(db); };
-            request.onupgradeneeded = (event) => {
-                const dbInstance = event.target.result;
-                if (!dbInstance.objectStoreNames.contains(COLOR_STORE_NAME)) {
-                    dbInstance.createObjectStore(COLOR_STORE_NAME, { keyPath: 'hex' });
+            const request = indexedDB.open(dbName, version);
+            request.onerror = (e) => reject(`IndexedDB (${dbName}) error: ${request.error}`);
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName, { keyPath });
                 }
             };
         });
     }
-
-    async function addSavedColorToDB(hexColor) {
-        if (!db || !CSS.supports('color', hexColor)) { console.warn('Invalid color or DB not ready:', hexColor); return; }
-        let normalizedHex = hexColor.toLowerCase();
-        if (normalizedHex.length === 4) normalizedHex = `#${normalizedHex[1]}${normalizedHex[1]}${normalizedHex[2]}${normalizedHex[2]}${normalizedHex[3]}${normalizedHex[3]}`;
-        if (normalizedHex.length !== 7) { console.warn('Invalid hex format:', hexColor); return; }
-
-        const transaction = db.transaction([COLOR_STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(COLOR_STORE_NAME);
+    async function dbGetAll(dbInstance, storeName) {
+        if (!dbInstance) return [];
         return new Promise((resolve, reject) => {
-            const request = store.put({ hex: normalizedHex, added: Date.now() });
-            request.onsuccess = () => { loadAndRenderUniversalSavedColors(); resolve(); };
-            request.onerror = (e) => { console.error('Failed to save color:', e); reject(request.error); };
-        });
-    }
-
-    async function getSavedColorsFromDB() {
-        if (!db) return [];
-        const transaction = db.transaction([COLOR_STORE_NAME], 'readonly');
-        const store = transaction.objectStore(COLOR_STORE_NAME);
-        return new Promise((resolve, reject) => {
+            const tx = dbInstance.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
             const request = store.getAll();
-            request.onsuccess = () => resolve(request.result.sort((a,b) => b.added - a.added)); 
-            request.onerror = (e) => { console.error('Failed to get colors:', e); reject(request.error); };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (e) => reject(`DB GetAll (${storeName}) error: ${request.error}`);
         });
     }
-    
-    async function deleteSavedColorFromDB(hexColor) {
-        if (!db) return;
-        const transaction = db.transaction([COLOR_STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(COLOR_STORE_NAME);
+    async function dbPut(dbInstance, storeName, item) {
+        if (!dbInstance) return;
         return new Promise((resolve, reject) => {
-            const request = store.delete(hexColor);
-            request.onsuccess = () => { loadAndRenderUniversalSavedColors(); resolve(); };
-            request.onerror = (e) => { console.error('Failed to delete color:', e); reject(request.error); };
+            const tx = dbInstance.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.put(item);
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(`DB Put (${storeName}) error: ${request.error}`);
+        });
+    }
+    async function dbDelete(dbInstance, storeName, key) {
+        if (!dbInstance) return;
+        return new Promise((resolve, reject) => {
+            const tx = dbInstance.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.delete(key);
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(`DB Delete (${storeName}) error: ${request.error}`);
         });
     }
 
+    // --- Specific DB Operations ---
+    async function addSavedColor(hex) { await dbPut(colorDB, COLOR_STORE_NAME, { hex: normalizeHex(hex), added: Date.now() }); loadAndRenderUniversalSavedColors(); }
+    async function getSavedColors() { const colors = await dbGetAll(colorDB, COLOR_STORE_NAME); return colors.sort((a,b) => b.added - a.added); }
+    async function deleteSavedColor(hex) { await dbDelete(colorDB, COLOR_STORE_NAME, hex); loadAndRenderUniversalSavedColors(); }
+    async function saveTemplate(name, stateData) { await dbPut(templateDB, TEMPLATE_STORE_NAME, { id: name, state: stateData, saved: Date.now() }); populateTemplateSelector(); }
+    async function getTemplates() { const tpls = await dbGetAll(templateDB, TEMPLATE_STORE_NAME); return tpls.sort((a,b) => (a.id.toLowerCase() > b.id.toLowerCase() ? 1 : -1)); }
+    async function deleteTemplate(name) { await dbDelete(templateDB, TEMPLATE_STORE_NAME, name); populateTemplateSelector(); }
+
+    // --- Color Utilities ---
+    function normalizeHex(hex) {
+        let h = (hex || '').toLowerCase();
+        if (h.length === 4 && h.startsWith('#')) h = `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}`;
+        return (h.length === 7 && h.startsWith('#')) ? h : null;
+    }
     function setActiveColorInput(targetName, element) {
-        if (activeColorInputElement && activeColorInputElement !== element) {
-            activeColorInputElement.classList.remove('targeted-for-saved-color');
-        }
-        activeColorInputTarget = targetName;
-        activeColorInputElement = element;
-        if (activeColorInputElement) {
-            activeColorInputElement.classList.add('targeted-for-saved-color');
-        }
-        console.log("Active color target set to:", targetName); // Debugging
+        if (activeColorInputElement && activeColorInputElement !== element) activeColorInputElement.classList.remove('targeted-for-saved-color');
+        activeColorInputTarget = targetName; activeColorInputElement = element;
+        if (activeColorInputElement) activeColorInputElement.classList.add('targeted-for-saved-color');
     }
-
     function clearActiveColorInputTarget() {
-        if (activeColorInputElement) {
-             activeColorInputElement.classList.remove('targeted-for-saved-color');
-        }
-        activeColorInputTarget = null;
-        activeColorInputElement = null;
-        console.log("Active color target cleared"); // Debugging
+        if (activeColorInputElement) activeColorInputElement.classList.remove('targeted-for-saved-color');
+        activeColorInputTarget = null; activeColorInputElement = null;
     }
-    
     function applySwatchColor(hex) {
-        if (!activeColorInputElement) {
-             alert("Please click on a color input (Brand, Background, or Layer Text) first to select where to apply the saved color.");
-             return;
-        }
-
-        console.log(`Applying ${hex} to target: ${activeColorInputTarget}`); // Debugging
-        activeColorInputElement.value = hex; 
-        activeColorInputElement.dispatchEvent(new Event('input', { bubbles: true }));
-        
-        // If the target was the layer text color, also update the hex input field
-        if(activeColorInputTarget === 'layerText') {
-            layerTextColorHex.value = hex;
-        }
-        
-        clearActiveColorInputTarget(); // Deactivate target after applying color
+        if (!activeColorInputElement) { alert("Click a color input first to target it."); return; }
+        activeColorInputElement.value = hex; activeColorInputElement.dispatchEvent(new Event('input', { bubbles: true }));
+        if(activeColorInputTarget === 'layerText') layerTextColorHex.value = hex; // Keep hex input synced for text layer
+        clearActiveColorInputTarget();
     }
-
-
     async function loadAndRenderUniversalSavedColors() {
         try {
-            const colors = await getSavedColorsFromDB();
-            universalSavedColorsContainer.innerHTML = ''; // Clear previous swatches
-            colors.forEach(colorObj => {
-                const swatch = document.createElement('div');
-                swatch.classList.add('color-swatch');
-                swatch.style.backgroundColor = colorObj.hex;
-                swatch.title = `Apply ${colorObj.hex} (Click color input first)`;
-                swatch.dataset.hex = colorObj.hex;
-                swatch.onclick = () => applySwatchColor(colorObj.hex); 
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.classList.add('delete-swatch-btn');
-                deleteBtn.innerHTML = '&times;'; 
-                deleteBtn.title = `Delete ${colorObj.hex}`;
-                deleteBtn.onclick = (e) => { e.stopPropagation(); deleteSavedColorFromDB(colorObj.hex); };
-                swatch.appendChild(deleteBtn);
-                universalSavedColorsContainer.appendChild(swatch);
+            const colors = await getSavedColors(); universalSavedColorsContainer.innerHTML = ''; 
+            colors.forEach(c => {
+                const swatch = document.createElement('div'); swatch.className = 'color-swatch'; swatch.style.backgroundColor = c.hex;
+                swatch.title = `Apply ${c.hex}`; swatch.dataset.hex = c.hex; swatch.onclick = () => applySwatchColor(c.hex); 
+                const delBtn = document.createElement('button'); delBtn.className = 'delete-swatch-btn'; delBtn.innerHTML = '&times;'; 
+                delBtn.title = `Delete ${c.hex}`; delBtn.onclick = (e) => { e.stopPropagation(); deleteSavedColor(c.hex); };
+                swatch.appendChild(delBtn); universalSavedColorsContainer.appendChild(swatch);
             });
-        } catch (error) {
-            console.error("Error loading/rendering saved colors:", error);
-        }
+        } catch (error) { console.error("Error rendering saved colors:", error); }
     }
 
+    // --- Template Operations ---
+    async function populateTemplateSelector() {
+        try {
+            const templates = await getTemplates();
+            loadTemplateSelect.innerHTML = '<option value="">Select template...</option>';
+            templates.forEach(tpl => {
+                const option = document.createElement('option');
+                option.value = option.textContent = tpl.id;
+                loadTemplateSelect.appendChild(option);
+            });
+        } catch (error) { console.error("Error populating templates:", error); }
+    }
+    function handleSaveTemplate() {
+        const name = saveTemplateNameInput.value.trim();
+        if (!name) { alert("Please enter a template name."); return; }
+        // Include only relevant parts of appState for a template
+        const templateState = {
+            layers: appState.layers,
+            globalSettings: appState.globalSettings
+            // Optionally include brandKit: appState.brandKit 
+        };
+        saveTemplate(name, templateState)
+            .then(() => { alert(`Template "${name}" saved.`); saveTemplateNameInput.value = ''; })
+            .catch(err => { alert(`Error saving template: ${err}`); console.error(err); });
+    }
+    async function handleLoadTemplate() {
+        const name = loadTemplateSelect.value;
+        if (!name) { alert("Please select a template to load."); return; }
+        try {
+            const tx = templateDB.transaction(TEMPLATE_STORE_NAME, 'readonly');
+            const store = tx.objectStore(TEMPLATE_STORE_NAME);
+            const req = store.get(name);
+            req.onsuccess = () => {
+                if (req.result) {
+                    const loadedState = req.result.state;
+                    // Deep merge might be better, but for now, replace parts
+                    appState.layers = loadedState.layers || [];
+                    appState.globalSettings = { ...defaultState.globalSettings, ...(loadedState.globalSettings || {}) };
+                    // appState.brandKit = { ...defaultState.brandKit, ...(loadedState.brandKit || {}) }; // Decide if templates override brand kit
+                    appState.selectedLayerId = null; // Reset selection
+                    // Re-init parts of the UI based on loaded state
+                    updateGlobalControlsDisplay();
+                    renderAllLayersOnCanvas();
+                    renderLayerPanel();
+                    updateSelectedLayerControls();
+                    saveState(); // Persist loaded state to localStorage
+                    alert(`Template "${name}" loaded.`);
+                } else { alert(`Template "${name}" not found.`); }
+            };
+            req.onerror = (e) => { throw new Error(req.error); };
+        } catch (error) { alert(`Error loading template: ${error}`); console.error(error); }
+    }
+    async function handleDeleteTemplate() {
+        const name = loadTemplateSelect.value;
+        if (!name) { alert("Please select a template to delete."); return; }
+        if (confirm(`Are you sure you want to delete the template "${name}"?`)) {
+            deleteTemplate(name)
+                .then(() => alert(`Template "${name}" deleted.`))
+                .catch(err => { alert(`Error deleting template: ${err}`); console.error(err); });
+        }
+    }
+    function handleExportTemplate() {
+         const name = loadTemplateSelect.value;
+        if (!name) { alert("Please select a template to export."); return; }
+         try {
+            const tx = templateDB.transaction(TEMPLATE_STORE_NAME, 'readonly');
+            const store = tx.objectStore(TEMPLATE_STORE_NAME);
+            const req = store.get(name);
+            req.onsuccess = () => {
+                if (req.result) {
+                    const dataStr = JSON.stringify(req.result.state, null, 2); // Pretty print JSON
+                    const blob = new Blob([dataStr], {type: "application/json"});
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `${name}.template.json`;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                } else { alert(`Template "${name}" not found.`); }
+            };
+             req.onerror = (e) => { throw new Error(req.error); };
+        } catch (error) { alert(`Error exporting template: ${error}`); console.error(error); }
+    }
+    function handleImportTemplate(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedState = JSON.parse(e.target.result);
+                let name = file.name.replace('.template.json', '').replace('.json', '');
+                name = prompt(`Enter a name for the imported template (or keep "${name}"):`, name);
+                if (name) {
+                    // Basic validation - check if it has layers or globalSettings
+                    if (importedState.layers || importedState.globalSettings) {
+                         saveTemplate(name, importedState)
+                            .then(() => alert(`Template "${name}" imported successfully.`))
+                            .catch(err => alert(`Error saving imported template: ${err}`));
+                    } else {
+                        alert("Invalid template file structure.");
+                    }
+                }
+            } catch (err) {
+                alert(`Error parsing template file: ${err}`);
+                console.error(err);
+            } finally {
+                 importTemplateInput.value = ''; // Reset file input
+            }
+        };
+        reader.readAsText(file);
+    }
 
-    // --- State Management & UI ---
+    // --- State Management & UI (Core, Layers, etc.) ---
     function loadState() {
         try {
-            const storedState = localStorage.getItem(APP_STORAGE_KEY);
+            const storedState = localStorage.getItem(APP_STATE_KEY);
             if (storedState) {
                  const parsedState = JSON.parse(storedState);
                  appState = { 
                     ...defaultState, ...parsedState,
                     brandKit: { ...defaultState.brandKit, ...(parsedState.brandKit || {}) },
                     globalSettings: { ...defaultState.globalSettings, ...(parsedState.globalSettings || {}) },
-                    layers: parsedState.layers || [] 
+                    // Ensure layers have default props if missing from saved state
+                    layers: (parsedState.layers || []).map(layer => ({
+                        ...defaultLayerProps[layer.type], // Apply defaults first
+                        ...(layer.type === 'image' ? { filters: {...defaultLayerProps.image.filters, ...(layer.filters || {}) } } : {}), // Deep merge filters
+                        ...(layer.type === 'text' ? { textStroke: {...defaultLayerProps.text.textStroke, ...(layer.textStroke || {}) } } : {}), // Deep merge stroke
+                        ...layer // Apply saved props over defaults
+                    }))
                 };
                 if (appState.layers && appState.layers.length > 0) {
-                    const maxId = appState.layers.reduce((max, layer) => {
-                        const idNum = layer.id ? parseInt(layer.id.split('-')[1]) : 0;
-                        return idNum > max ? idNum : max;
-                    }, 0);
+                    const maxId = appState.layers.reduce((max, layer) => { const idNum = layer.id ? parseInt(layer.id.split('-')[1]) : 0; return idNum > max ? idNum : max; }, 0);
                     layerIdCounter = maxId;
                 } else { layerIdCounter = 0; }
             } else { appState = JSON.parse(JSON.stringify(defaultState)); }
         } catch (e) { console.error("LS Load Error:", e); appState = JSON.parse(JSON.stringify(defaultState)); }
     }
-
-    function saveState() {
-        try { localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState)); } 
-        catch (e) { console.error("LS Save Error:", e); }
-    }
-    
+    function saveState() { try { localStorage.setItem(APP_STATE_KEY, JSON.stringify(appState)); } catch (e) { console.error("LS Save Error:", e); }}
     function getSelectedLayer() { return appState.selectedLayerId ? appState.layers.find(l => l.id === appState.selectedLayerId) : null; }
     const layerElements = new Map(); 
     function createLayerElement(layer) {
         const el = document.createElement('div'); el.id = `canvas-layer-${layer.id}`; el.classList.add('draggable-layer');
         el.style.zIndex = layer.zIndex; el.style.left = layer.left || '10px'; el.style.top = layer.top || '10px';
         el.style.visibility = layer.visible ? 'visible' : 'hidden';
+        if (layer.locked) el.classList.add('layer-locked-on-canvas');
+
         if (layer.type === 'text') {
             el.style.fontFamily = layer.fontFamily; el.style.fontSize = `${layer.fontSize}px`; el.style.color = layer.color;
             el.style.textShadow = layer.textShadowEnabled ? '2px 2px 4px rgba(0,0,0,.6)' : 'none';
             el.textContent = layer.text; el.style.whiteSpace = 'pre-wrap'; el.style.padding = '5px'; 
             el.style.width = layer.width || 'auto'; el.style.height = layer.height || 'auto';
+            // Apply text stroke
+            const stroke = layer.textStroke || defaultLayerProps.text.textStroke;
+            el.style.webkitTextStroke = `${stroke.width}px ${stroke.color}`;
+            el.style.textStroke = `${stroke.width}px ${stroke.color}`; // Standard property
+            el.style.paintOrder = 'stroke fill'; // Make stroke appear behind fill generally
         } else if (layer.type === 'image') {
             const img = document.createElement('img'); img.src = layer.imageSrc || ''; img.alt = layer.name || 'Image';
+            const filters = layer.filters || defaultLayerProps.image.filters;
+            el.style.filter = `blur(${filters.blur}px) brightness(${filters.brightness}) contrast(${filters.contrast}) grayscale(${filters.grayscale}) sepia(${filters.sepia})`;
             el.appendChild(img); el.style.width = layer.width || '100px'; el.style.height = layer.height || '100px';
             el.style.opacity = layer.opacity;
         }
@@ -437,12 +512,18 @@
         el.style.left = layer.left; el.style.top = layer.top; el.style.zIndex = layer.zIndex;
         el.style.visibility = layer.visible ? 'visible' : 'hidden';
         el.classList.toggle('selected-on-canvas', layer.id === appState.selectedLayerId);
+        el.classList.toggle('layer-locked-on-canvas', !!layer.locked);
+
         if (layer.type === 'text') {
             el.style.fontFamily = layer.fontFamily; el.style.fontSize = `${layer.fontSize}px`; el.style.color = layer.color;
             el.style.textShadow = layer.textShadowEnabled ? '2px 2px 4px rgba(0,0,0,.6)' : 'none';
             el.textContent = layer.text; el.style.width = layer.width || 'auto'; el.style.height = layer.height || 'auto';
+            const stroke = layer.textStroke || defaultLayerProps.text.textStroke;
+            el.style.webkitTextStroke = `${stroke.width}px ${stroke.color}`; el.style.textStroke = `${stroke.width}px ${stroke.color}`;
         } else if (layer.type === 'image') {
             const img = el.querySelector('img'); if(img) img.src = layer.imageSrc || '';
+            const filters = layer.filters || defaultLayerProps.image.filters;
+            el.style.filter = `blur(${filters.blur}px) brightness(${filters.brightness}) contrast(${filters.contrast}) grayscale(${filters.grayscale}) sepia(${filters.sepia})`;
             el.style.width = layer.width; el.style.height = layer.height; el.style.opacity = layer.opacity;
         }
     }
@@ -455,19 +536,32 @@
     function renderLayerPanel() {
         layerPanel.innerHTML = '';
         [...appState.layers].reverse().forEach(layer => {
-            const item = document.createElement('div'); item.classList.add('layer-item');
+            const item = document.createElement('div'); item.className = 'layer-item';
             item.classList.toggle('selected', layer.id === appState.selectedLayerId);
-            const nameSpan = document.createElement('span'); nameSpan.classList.add('layer-name');
+            item.classList.toggle('locked', !!layer.locked);
+            const nameSpan = document.createElement('span'); nameSpan.className = 'layer-name';
             nameSpan.textContent = layer.name || `Layer ${layer.id.split('-')[1]}`; nameSpan.title = `Type: ${layer.type} (ID: ${layer.id})`;
-            item.appendChild(nameSpan); item.draggable = true;
+            item.appendChild(nameSpan); item.draggable = !layer.locked; // Only draggable if not locked
             item.addEventListener('click', () => selectLayer(layer.id));
-            item.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', layer.id); e.dataTransfer.effectAllowed = 'move'; });
-            const controlsDiv = document.createElement('div'); controlsDiv.classList.add('layer-controls');
+            item.addEventListener('dragstart', (e) => { if (!layer.locked) { e.dataTransfer.setData('text/plain', layer.id); e.dataTransfer.effectAllowed = 'move'; } else { e.preventDefault();} });
+            
+            const controlsDiv = document.createElement('div'); controlsDiv.className = 'layer-controls';
+            // Visibility
             const visibilityBtn = document.createElement('button'); visibilityBtn.innerHTML = layer.visible ? '👁️' : '🙈';
             visibilityBtn.title = layer.visible ? 'Hide' : 'Show'; visibilityBtn.onclick = (e) => { e.stopPropagation(); toggleLayerVisibility(layer.id); };
+            // Lock
+            const lockBtn = document.createElement('button'); lockBtn.innerHTML = layer.locked ? '🔒' : '🔓';
+            lockBtn.title = layer.locked ? 'Unlock' : 'Lock'; lockBtn.onclick = (e) => { e.stopPropagation(); toggleLayerLock(layer.id); };
+            // Duplicate
+            const duplicateBtn = document.createElement('button'); duplicateBtn.innerHTML = '📄'; // Document icon
+            duplicateBtn.title = 'Duplicate'; duplicateBtn.onclick = (e) => { e.stopPropagation(); duplicateLayer(layer.id); };
+             // Delete
             const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '🗑️'; deleteBtn.title = 'Delete';
             deleteBtn.onclick = (e) => { e.stopPropagation(); deleteLayer(layer.id); };
-            controlsDiv.appendChild(visibilityBtn); controlsDiv.appendChild(deleteBtn); item.appendChild(controlsDiv); layerPanel.appendChild(item);
+            
+            controlsDiv.appendChild(visibilityBtn); controlsDiv.appendChild(lockBtn); 
+            controlsDiv.appendChild(duplicateBtn); controlsDiv.appendChild(deleteBtn); 
+            item.appendChild(controlsDiv); layerPanel.appendChild(item);
         });
         layerPanel.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
         layerPanel.ondrop = (e) => {
@@ -489,18 +583,33 @@
     function updateZIndices() { appState.layers.forEach((layer, index) => layer.zIndex = index + 1); }
     function updateSelectedLayerControls() {
         const layer = getSelectedLayer();
-        if (!layer) { selectedLayerControlsSection.classList.add('hidden'); return; }
+        if (!layer || layer.locked) { // Hide if no layer or locked layer selected
+            selectedLayerControlsSection.classList.add('hidden');
+             if(layer?.locked) { // If locked, briefly show a message maybe? Or just disable panel is enough.
+                console.log("Layer is locked, controls hidden.");
+             }
+            return; 
+        }
         selectedLayerControlsSection.classList.remove('hidden');
         selectedLayerName.textContent = layer.name || `Layer ${layer.id.split('-')[1]}`;
         layerNameInputCtrl.value = layer.name || '';
         textLayerControls.classList.add('hidden'); imageLayerControls.classList.add('hidden');
+
         if (layer.type === 'text') {
             textLayerControls.classList.remove('hidden'); layerTextInput.value = layer.text;
             layerTextSize.value = layer.fontSize; layerTextColor.value = layer.color; layerTextColorHex.value = layer.color;
+            const stroke = layer.textStroke || defaultLayerProps.text.textStroke;
+            layerTextStrokeWidth.value = stroke.width; layerTextStrokeColor.value = stroke.color;
             layerTextFont.value = layer.fontFamily; layerTextShadow.checked = layer.textShadowEnabled;
-            setActiveColorInput('layerText', layerTextColor); // Default target
+            setActiveColorInput('layerText', layerTextColor); 
         } else if (layer.type === 'image') {
             imageLayerControls.classList.remove('hidden'); layerImageOpacity.value = layer.opacity;
+            const filters = layer.filters || defaultLayerProps.image.filters;
+            filterBlur.value = filters.blur; filterBlurValue.textContent = `${filters.blur}px`;
+            filterBrightness.value = filters.brightness; filterBrightnessValue.textContent = `${Math.round(filters.brightness * 100)}%`;
+            filterContrast.value = filters.contrast; filterContrastValue.textContent = `${Math.round(filters.contrast * 100)}%`;
+            filterGrayscale.value = filters.grayscale; filterGrayscaleValue.textContent = `${Math.round(filters.grayscale * 100)}%`;
+            filterSepia.value = filters.sepia; filterSepiaValue.textContent = `${Math.round(filters.sepia * 100)}%`;
         }
     }
     function updateGlobalControlsDisplay() {
@@ -518,12 +627,11 @@
         if (appState.brandKit.logoSrc && canvasElement.offsetWidth > 0 && canvasElement.offsetHeight > 0) {
             brandLogoWatermarkElement.src = appState.brandKit.logoSrc; brandLogoWatermarkElement.classList.remove('hidden');
             const canvasWidth = canvasElement.offsetWidth; const logoSizePercent = appState.brandKit.logoSize / 100;
-            const logoPixelWidth = canvasWidth * logoSizePercent;
-            const margin = 10; const tempImgForDimensions = new Image();
+            const logoPixelWidth = canvasWidth * logoSizePercent; const margin = 10; const tempImgForDimensions = new Image();
             tempImgForDimensions.onload = () => {
                 if (tempImgForDimensions.naturalWidth === 0) { brandLogoWatermarkElement.classList.add('hidden'); return; }
                 const logoPixelHeight = (tempImgForDimensions.naturalHeight / tempImgForDimensions.naturalWidth) * logoPixelWidth;
-                let cssText = `width:${logoPixelWidth}px; height:auto; opacity:${appState.brandKit.logoOpacity};`;
+                let cssText = `width:${logoPixelWidth}px; height:auto; opacity:${appState.brandKit.logoOpacity}; position:absolute;`;
                 switch (appState.brandKit.logoPosition) {
                     case 'bottom-right': cssText += `top:auto;left:auto;bottom:${margin}px;right:${margin}px;`; break;
                     case 'bottom-left': cssText += `top:auto;right:auto;bottom:${margin}px;left:${margin}px;`; break;
@@ -536,32 +644,58 @@
             tempImgForDimensions.src = appState.brandKit.logoSrc;
         } else { brandLogoWatermarkElement.classList.add('hidden'); brandLogoWatermarkElement.src = ''; }
     }
-    function updateBackgroundDisplay() {
-        const gs = appState.globalSettings; const o = gs.bgOrientation.replace('to-', 'to ');
-        canvasElement.style.backgroundImage = `linear-gradient(${o}, ${gs.bgTopColor}, ${gs.bgBottomColor})`;
-    }
-    function updateCanvasDimensions() {
-        const [w, h] = appState.globalSettings.canvasPreset.split('x');
-        document.documentElement.style.setProperty('--canvas-w', `${w}px`); document.documentElement.style.setProperty('--canvas-h', `${h}px`);
-        setTimeout(renderBrandLogoWatermark, 50); 
-    }
+    function updateBackgroundDisplay() { const gs = appState.globalSettings; const o = gs.bgOrientation.replace('to-', 'to '); canvasElement.style.backgroundImage = `linear-gradient(${o}, ${gs.bgTopColor}, ${gs.bgBottomColor})`; }
+    function updateCanvasDimensions() { const [w, h] = appState.globalSettings.canvasPreset.split('x'); document.documentElement.style.setProperty('--canvas-w', `${w}px`); document.documentElement.style.setProperty('--canvas-h', `${h}px`); setTimeout(renderBrandLogoWatermark, 50); }
     function toggleSafeZoneVisibility() { safeZoneElement.style.display = appState.globalSettings.safeZoneToggle ? 'block' : 'none'; }
     function addNewLayer(type) {
         layerIdCounter++; const id = `l-${layerIdCounter}`;
-        const base = { id, visible: true, zIndex: 0, left: `${Math.random()*20+10}px`, top: `${Math.random()*30+10}px`};
+        const base = { id, visible: true, locked: false, zIndex: 0, left: `${Math.random()*20+10}px`, top: `${Math.random()*30+10}px`};
         let newLayer;
-        if (type === 'text') newLayer = {...base, type, name:`Text ${layerIdCounter}`, text:'New Text', fontSize:32, color:appState.brandKit.brandColor, fontFamily:"'Inter', sans-serif", textShadowEnabled:true, width:'auto', height:'auto'};
-        else if (type === 'image') newLayer = {...base, type, name:`Image ${layerIdCounter}`, imageSrc:null, opacity:1, width:'150px', height:'100px'};
+        if (type === 'text') newLayer = {...base, type, name:`Text ${layerIdCounter}`, ...JSON.parse(JSON.stringify(defaultLayerProps.text)), color:appState.brandKit.brandColor };
+        else if (type === 'image') newLayer = {...base, type, name:`Image ${layerIdCounter}`, ...JSON.parse(JSON.stringify(defaultLayerProps.image))};
+        else return; // Unknown type
         appState.layers.push(newLayer); updateZIndices(); createLayerElement(newLayer); selectLayer(id); saveState();
     }
-    function selectLayer(id) { appState.selectedLayerId = id; renderLayerPanel(); updateSelectedLayerControls(); updateSelectedLayerHighlight(); saveState(); }
+    function selectLayer(id) { const layer = appState.layers.find(l => l.id === id); if (!layer) return; appState.selectedLayerId = id; renderLayerPanel(); updateSelectedLayerControls(); updateSelectedLayerHighlight(); saveState(); }
     function updateSelectedLayerProperty(key, value) {
-        const l = getSelectedLayer(); if (!l) return; l[key] = value;
+        const l = getSelectedLayer(); if (!l || l.locked) return; l[key] = value;
         if (key === 'name') { renderLayerPanel(); selectedLayerName.textContent = value || `Layer ${l.id.split('-')[1]}`; }
         updateLayerElement(l); saveState();
     }
+     function updateLayerFilter(filterName, value) {
+        const l = getSelectedLayer(); if (!l || l.locked || l.type !== 'image') return; 
+        if (!l.filters) l.filters = { ...defaultLayerProps.image.filters }; // Ensure filters object exists
+        l.filters[filterName] = value;
+        updateLayerElement(l); saveState();
+    }
+     function updateLayerTextStroke(prop, value) {
+        const l = getSelectedLayer(); if (!l || l.locked || l.type !== 'text') return; 
+        if (!l.textStroke) l.textStroke = { ...defaultLayerProps.text.textStroke }; // Ensure stroke object exists
+        l.textStroke[prop] = value;
+        updateLayerElement(l); saveState();
+    }
     function toggleLayerVisibility(id) { const l=appState.layers.find(x=>x.id===id); if(l){l.visible=!l.visible;updateLayerElement(l);renderLayerPanel();saveState();}}
+    function toggleLayerLock(id) { const l=appState.layers.find(x=>x.id===id); if(l){l.locked=!l.locked; renderLayerPanel(); updateLayerElement(l); if(l.id === appState.selectedLayerId) updateSelectedLayerControls(); /* Re-render controls if selected layer locked */ saveState();}}
+    function duplicateLayer(id) {
+        const sourceLayer = appState.layers.find(l => l.id === id);
+        if (!sourceLayer) return;
+        layerIdCounter++; const newId = `l-${layerIdCounter}`;
+        const newLayer = JSON.parse(JSON.stringify(sourceLayer)); // Deep copy
+        newLayer.id = newId;
+        newLayer.name = `${sourceLayer.name || 'Layer'} Copy`;
+        newLayer.locked = false; // Duplicated layer is unlocked
+        // Slightly offset the duplicate
+        newLayer.left = `${(parseFloat(sourceLayer.left || 0) + 15)}px`;
+        newLayer.top = `${(parseFloat(sourceLayer.top || 0) + 15)}px`;
+        
+        const sourceIndex = appState.layers.findIndex(l => l.id === id);
+        appState.layers.splice(sourceIndex + 1, 0, newLayer); // Insert after original
+        
+        updateZIndices(); createLayerElement(newLayer); renderLayerPanel(); selectLayer(newId); saveState();
+    }
     function deleteLayer(id) {
+        const layer = appState.layers.find(l => l.id === id);
+        if (layer?.locked) { alert("Layer is locked. Unlock it before deleting."); return; } // Prevent deleting locked layers
         appState.layers = appState.layers.filter(l => l.id !== id); removeLayerElement(id);
         if (appState.selectedLayerId === id) {
             appState.selectedLayerId = null;
@@ -570,201 +704,192 @@
         updateZIndices(); renderLayerPanel(); saveState();
     }
     function centerSelectedLayer() {
-        const l = getSelectedLayer(), el = layerElements.get(l.id); if(!l || !el) return;
+        const l = getSelectedLayer(), el = layerElements.get(l.id); if(!l || !el || l.locked) return;
         l.left = `${(canvasElement.offsetWidth - el.offsetWidth) / 2}px`; l.top = `${(canvasElement.offsetHeight - el.offsetHeight) / 2}px`;
         updateLayerElement(l); saveState();
     }
-    
-    // --- Text-to-Speech ---
     function readTextAloud() {
-        if (!('speechSynthesis' in window)) {
-            alert('Sorry, your browser does not support Text-to-Speech.');
-            return;
-        }
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel(); // Stop current speech if any
-        }
-
-        const textToRead = appState.layers
-            .filter(layer => layer.type === 'text' && layer.visible && layer.text.trim() !== '')
-            .sort((a, b) => a.zIndex - b.zIndex) // Read layers in order
-            .map(layer => layer.text.trim())
-            .join('. '); // Join text blocks with a pause
-
-        if (textToRead === '') {
-            alert('No visible text found on the canvas to read.');
-            return;
-        }
-
+        if (!('speechSynthesis' in window)) { alert('Sorry, your browser does not support Text-to-Speech.'); return; }
+        if (speechSynthesis.speaking) { speechSynthesis.cancel(); }
+        const textToRead = appState.layers.filter(l => l.type === 'text' && l.visible && l.text.trim() !== '').sort((a, b) => a.zIndex - b.zIndex).map(l => l.text.trim()).join('. ');
+        if (textToRead === '') { alert('No visible text found.'); return; }
         const utterance = new SpeechSynthesisUtterance(textToRead);
-        // You could add options here to select voice, rate, pitch if desired
-        // utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === 'Your Preferred Voice');
-        // utterance.rate = 1; // 0.1 to 10
-        // utterance.pitch = 1; // 0 to 2
-
-        utterance.onerror = (event) => {
-            console.error('SpeechSynthesisUtterance.onerror', event);
-            alert(`An error occurred during speech synthesis: ${event.error}`);
-            readAloudBtn.disabled = false;
-            readAloudBtn.querySelector('span').textContent = 'Read Text Aloud';
-
-        };
-         utterance.onstart = () => {
-            readAloudBtn.disabled = true;
-            readAloudBtn.querySelector('span').textContent = 'Speaking...';
-        };
-        utterance.onend = () => {
-            readAloudBtn.disabled = false;
-            readAloudBtn.querySelector('span').textContent = 'Read Text Aloud';
-        };
-
-
+        utterance.onerror = (e) => { console.error('SpeechSynthesis Error', e); alert(`TTS Error: ${e.error}`); readAloudBtn.disabled = false; readAloudBtn.querySelector('span').textContent = 'Read Text Aloud'; };
+        utterance.onstart = () => { readAloudBtn.disabled = true; readAloudBtn.querySelector('span').textContent = 'Speaking...'; };
+        utterance.onend = () => { readAloudBtn.disabled = false; readAloudBtn.querySelector('span').textContent = 'Read Text Aloud'; };
         speechSynthesis.speak(utterance);
     }
-
-
-    // --- Event Handler Setup ---
     function setupEventListeners() {
-        // Set active color input target
-        const colorInputs = [brandColorCtrl, bgTopColorCtrl, bgBottomColorCtrl, layerTextColor];
-        colorInputs.forEach(ctrl => {
-            const targetName = ctrl.id.replace('Ctrl', '').replace('layerText', 'layerText'); 
+        // --- Color Input Targeting ---
+        const targetableColorInputs = document.querySelectorAll('.color-input-targetable');
+        targetableColorInputs.forEach(ctrl => {
+            const targetName = ctrl.id.replace('Ctrl', '');
             const handler = () => setActiveColorInput(targetName, ctrl);
-            ctrl.addEventListener('focus', handler);
-            ctrl.addEventListener('click', handler); // Needed for color picker modal
+            ctrl.addEventListener('focus', handler); ctrl.addEventListener('click', handler);
         });
-        // Special handling for hex input to target its corresponding color picker
         layerTextColorHex.addEventListener('focus', () => setActiveColorInput('layerText', layerTextColor)); 
-        // Clear target when focus is lost from relevant areas
-        document.addEventListener('click', (e) => {
-           // If click is outside the color controls section or the saved swatches, clear target
-           if (!e.target.closest('.color-input-targetable') && !e.target.closest('#universalSavedColorsSection')) {
-               clearActiveColorInputTarget();
-           }
-        }, true); // Use capture phase
-
-        saveActiveColorBtn.onclick = () => {
-            if (activeColorInputElement) addSavedColorToDB(activeColorInputElement.value);
-            else alert("Click a color input first (Brand, Background, or Layer Text) to select which color to save.");
-        };
-
+        document.addEventListener('click', (e) => { if (!e.target.closest('.color-input-targetable, #universalSavedColorsSection')) clearActiveColorInputTarget(); }, true);
+        saveActiveColorBtn.onclick = () => { if (activeColorInputElement) addSavedColor(activeColorInputElement.value); else alert("Click a color input first."); };
+        
+        // --- Brand Kit ---
         brandColorCtrl.oninput = () => { appState.brandKit.brandColor = brandColorCtrl.value; saveState(); };
-        brandLogoUploadCtrl.onchange = (e) => {
-            const f = e.target.files[0]; if (!f) return; const r = new FileReader();
-            r.onload = (ev) => { appState.brandKit.logoSrc = ev.target.result; renderBrandLogoWatermark(); saveState(); };
-            r.readAsDataURL(f); brandLogoUploadCtrl.value = '';
-        };
+        brandLogoUploadCtrl.onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => { appState.brandKit.logoSrc = ev.target.result; renderBrandLogoWatermark(); saveState(); }; r.readAsDataURL(f); brandLogoUploadCtrl.value = ''; };
         clearBrandLogoCtrl.onclick = () => { appState.brandKit.logoSrc = null; renderBrandLogoWatermark(); saveState(); };
         brandLogoOpacityCtrl.oninput = () => { appState.brandKit.logoOpacity = parseFloat(brandLogoOpacityCtrl.value); renderBrandLogoWatermark(); saveState(); };
         brandLogoSizeCtrl.oninput = () => { appState.brandKit.logoSize = parseInt(brandLogoSizeCtrl.value); renderBrandLogoWatermark(); saveState(); };
         brandLogoPositionCtrl.onchange = () => { appState.brandKit.logoPosition = brandLogoPositionCtrl.value; renderBrandLogoWatermark(); saveState(); };
+        
+        // --- Layers & Layer Controls ---
         addTextLayerBtn.onclick = () => addNewLayer('text'); addImageLayerBtn.onclick = () => addNewLayer('image');
         layerNameInputCtrl.oninput = (e) => updateSelectedLayerProperty('name', e.target.value);
         centerLayerBtn.onclick = centerSelectedLayer;
         layerTextInput.oninput = (e) => updateSelectedLayerProperty('text', e.target.value);
         layerTextSize.oninput = (e) => updateSelectedLayerProperty('fontSize', parseInt(e.target.value));
         layerTextColor.oninput = (e) => { const color = e.target.value; layerTextColorHex.value = color; updateSelectedLayerProperty('color', color);};
-        layerTextColorHex.onchange = (e) => {
-            let hex = e.target.value.trim(); if (!hex.startsWith('#')) hex = '#' + hex;
-            if (/^#[0-9A-Fa-f]{3}$|^#[0-9A-Fa-f]{6}$/.test(hex) && CSS.supports('color', hex)) { layerTextColor.value = hex; updateSelectedLayerProperty('color', hex); } 
-            else { layerTextColorHex.value = layerTextColor.value; }
-        };
+        layerTextColorHex.onchange = (e) => { let hex = e.target.value.trim(); if (!hex.startsWith('#')) hex = '#' + hex; if (/^#[0-9A-Fa-f]{3}$|^#[0-9A-Fa-f]{6}$/.test(hex) && CSS.supports('color', hex)) { layerTextColor.value = hex; updateSelectedLayerProperty('color', hex); } else { layerTextColorHex.value = layerTextColor.value; } };
+        layerTextStrokeWidth.oninput = (e) => updateLayerTextStroke('width', parseFloat(e.target.value));
+        layerTextStrokeColor.oninput = (e) => { setActiveColorInput('layerTextStrokeColor', e.target); updateLayerTextStroke('color', e.target.value); }; // Also targetable
+        layerTextStrokeColor.addEventListener('focus', () => setActiveColorInput('layerTextStrokeColor', layerTextStrokeColor)); // Explicit focus target
+        layerTextStrokeColor.addEventListener('click', () => setActiveColorInput('layerTextStrokeColor', layerTextStrokeColor)); // Explicit click target
         layerTextFont.onchange = (e) => updateSelectedLayerProperty('fontFamily', e.target.value);
         layerTextShadow.onchange = (e) => updateSelectedLayerProperty('textShadowEnabled', e.target.checked);
         layerImageUpload.onchange = (e) => {
             const f = e.target.files[0], l = getSelectedLayer(); if (!f || !l || l.type!=='image') return; const r = new FileReader();
-            r.onload = (ev) => {
-                const src = ev.target.result; updateSelectedLayerProperty('imageSrc', src);
-                const img = new Image(); img.onload = () => {
-                    if(img.naturalWidth===0) return; const w=parseFloat(l.width)||img.naturalWidth;
-                    l.height = `${(img.naturalHeight / img.naturalWidth) * w}px`;
-                    if(l.width==='auto'||!parseFloat(l.width)) l.width = `${Math.min(w,img.naturalWidth,canvasElement.offsetWidth*0.8)}px`;
-                    updateLayerElement(l); saveState(); 
-                }; img.src = src;
-            }; r.readAsDataURL(f); layerImageUpload.value = ''; 
+            r.onload = (ev) => { const src = ev.target.result; updateSelectedLayerProperty('imageSrc', src); const img = new Image(); img.onload = () => { if(img.naturalWidth===0) return; const w=parseFloat(l.width)||img.naturalWidth; l.height = `${(img.naturalHeight / img.naturalWidth) * w}px`; if(l.width==='auto'||!parseFloat(l.width)) l.width = `${Math.min(w,img.naturalWidth,canvasElement.offsetWidth*0.8)}px`; updateLayerElement(l); saveState(); }; img.src = src; }; r.readAsDataURL(f); layerImageUpload.value = ''; 
         };
         layerImageOpacity.oninput = (e) => updateSelectedLayerProperty('opacity', parseFloat(e.target.value));
+        // Image Filters
+        filterBlur.oninput = (e) => { const v = parseInt(e.target.value); updateLayerFilter('blur', v); filterBlurValue.textContent = `${v}px`; };
+        filterBrightness.oninput = (e) => { const v = parseFloat(e.target.value); updateLayerFilter('brightness', v); filterBrightnessValue.textContent = `${Math.round(v * 100)}%`; };
+        filterContrast.oninput = (e) => { const v = parseFloat(e.target.value); updateLayerFilter('contrast', v); filterContrastValue.textContent = `${Math.round(v * 100)}%`; };
+        filterGrayscale.oninput = (e) => { const v = parseFloat(e.target.value); updateLayerFilter('grayscale', v); filterGrayscaleValue.textContent = `${Math.round(v * 100)}%`; };
+        filterSepia.oninput = (e) => { const v = parseFloat(e.target.value); updateLayerFilter('sepia', v); filterSepiaValue.textContent = `${Math.round(v * 100)}%`; };
+        resetImageFiltersBtn.onclick = () => { const l = getSelectedLayer(); if(l?.type==='image') { updateSelectedLayerProperty('filters', JSON.parse(JSON.stringify(defaultLayerProps.image.filters))); updateSelectedLayerControls(); /* Refresh sliders */}};
+        
+        // --- Background & Global ---
         const gs = appState.globalSettings; 
         bgTopColorCtrl.oninput = () => { gs.bgTopColor = bgTopColorCtrl.value; updateBackgroundDisplay(); saveState(); };
         bgBottomColorCtrl.oninput = () => { gs.bgBottomColor = bgBottomColorCtrl.value; updateBackgroundDisplay(); saveState(); };
         bgOrientationCtrl.onchange = () => { gs.bgOrientation = bgOrientationCtrl.value; updateBackgroundDisplay(); saveState(); };
-        readAloudBtn.onclick = readTextAloud; // Hook up TTS button
+        readAloudBtn.onclick = readTextAloud; 
         canvasPresetCtrl.onchange = () => { gs.canvasPreset = canvasPresetCtrl.value; updateCanvasDimensions(); saveState(); };
         safeZoneToggleCtrl.onchange = () => { gs.safeZoneToggle = safeZoneToggleCtrl.checked; toggleSafeZoneVisibility(); saveState(); };
+        
+        // --- Templates ---
+        saveTemplateBtn.onclick = handleSaveTemplate;
+        loadTemplateBtn.onclick = handleLoadTemplate;
+        deleteTemplateBtn.onclick = handleDeleteTemplate;
+        exportTemplateBtn.onclick = handleExportTemplate;
+        importTemplateInput.onchange = handleImportTemplate;
+
+        // --- Export & Share ---
         exportPngBtn.onclick = handleExport;
+        sharePngBtn.onclick = handleShare; // Hook up share button
+        
+        // --- Observers ---
         new ResizeObserver(renderBrandLogoWatermark).observe(canvasElement);
     }
     function makeDraggable(layerElement, layerObject) {
         let isDragging = false, isResizing = false; let startX, startY, initialLeft, initialTop, initialWidth, initialHeight;
         let dragListening = false, resizeListening = false; let resizeHandle = layerElement.querySelector('.resize-handle');
         const onPointerDown = (e) => {
+            if (layerObject.locked) return; // Don't drag if locked
             if (e.pointerType === 'mouse' && e.button !== 0) return; if (resizeHandle && e.target === resizeHandle) return;
             if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id); if (appState.selectedLayerId !== layerObject.id) return;
             e.preventDefault(); isDragging = true; startX = e.clientX; startY = e.clientY; initialLeft = layerElement.offsetLeft; initialTop = layerElement.offsetTop;
             if (!dragListening) { document.addEventListener('pointermove', onPointerMove); document.addEventListener('pointerup', onDragUp); dragListening = true; } try { layerElement.setPointerCapture(e.pointerId); } catch(err) {}
         };
-        const onPointerMove = (e) => {
-            if (!isDragging) return; layerObject.left = `${initialLeft+(e.clientX-startX)}px`; layerObject.top = `${initialTop+(e.clientY-startY)}px`;
-            layerElement.style.left = layerObject.left; layerElement.style.top = layerObject.top;
-        };
-        const onDragUp = (e) => {
-            if (isDragging) { isDragging=false; saveState(); } if (dragListening) {
-                document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onDragUp); dragListening = false;
-            } try { if (layerElement.hasPointerCapture(e.pointerId)) layerElement.releasePointerCapture(e.pointerId); } catch(err) {}
-        };
+        const onPointerMove = (e) => { if (!isDragging || layerObject.locked) return; layerObject.left = `${initialLeft+(e.clientX-startX)}px`; layerObject.top = `${initialTop+(e.clientY-startY)}px`; layerElement.style.left = layerObject.left; layerElement.style.top = layerObject.top; };
+        const onDragUp = (e) => { if (isDragging) { isDragging=false; saveState(); } if (dragListening) { document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onDragUp); dragListening = false; } try { if (layerElement.hasPointerCapture(e.pointerId)) layerElement.releasePointerCapture(e.pointerId); } catch(err) {} };
         layerElement.addEventListener('pointerdown', onPointerDown);
         if (layerObject.type === 'image') {
             if (!resizeHandle) { resizeHandle = document.createElement('span'); resizeHandle.classList.add('resize-handle'); layerElement.appendChild(resizeHandle); }
-            resizeHandle.style.display = 'block'; 
+            resizeHandle.style.display = layerObject.locked ? 'none' : 'block'; // Hide handle if locked
             const onResizeDown = (e) => {
+                if (layerObject.locked) return; // Don't resize if locked
                 if (e.pointerType === 'mouse' && e.button !== 0) return; if (appState.selectedLayerId !== layerObject.id) selectLayer(layerObject.id);
                 if (appState.selectedLayerId !== layerObject.id) return; e.preventDefault(); e.stopPropagation(); isResizing = true;
                 startX = e.clientX; startY = e.clientY; initialWidth = layerElement.offsetWidth; initialHeight = layerElement.offsetHeight;
                 if (!resizeListening) { document.addEventListener('pointermove', onResizeMove); document.addEventListener('pointerup', onResizeUp); resizeListening = true; } try { resizeHandle.setPointerCapture(e.pointerId); } catch(err) {}
             };
-            const onResizeMove = (e) => {
-                if (!isResizing) return; let newW = initialWidth+(e.clientX-startX), newH = initialHeight+(e.clientY-startY);
-                if (newW<20)newW=20; if(newH<20)newH=20; layerObject.width=`${newW}px`;layerObject.height=`${newH}px`;
-                layerElement.style.width=layerObject.width; layerElement.style.height=layerObject.height;
-            };
-            const onResizeUp = (e) => {
-                if(isResizing){isResizing=false;saveState();} if(resizeListening){ document.removeEventListener('pointermove',onResizeMove);document.removeEventListener('pointerup',onResizeUp);resizeListening=false; } 
-                try{if(resizeHandle.hasPointerCapture(e.pointerId))resizeHandle.releasePointerCapture(e.pointerId);}catch(err){}
-            };
+            const onResizeMove = (e) => { if (!isResizing || layerObject.locked) return; let newW = initialWidth+(e.clientX-startX), newH = initialHeight+(e.clientY-startY); if (newW<20)newW=20; if(newH<20)newH=20; layerObject.width=`${newW}px`;layerObject.height=`${newH}px`; layerElement.style.width=layerObject.width; layerElement.style.height=layerObject.height; };
+            const onResizeUp = (e) => { if(isResizing){isResizing=false;saveState();} if(resizeListening){ document.removeEventListener('pointermove',onResizeMove);document.removeEventListener('pointerup',onResizeUp);resizeListening=false; } try{if(resizeHandle.hasPointerCapture(e.pointerId))resizeHandle.releasePointerCapture(e.pointerId);}catch(err){} };
             resizeHandle.addEventListener('pointerdown', onResizeDown);
         } else if (resizeHandle) { resizeHandle.style.display = 'none'; }
     }
     async function handleExport() {
+        sharePngBtn.classList.add('hidden'); // Hide share button initially
+        lastExportedBlob = null;
         const origSafeDisp = safeZoneElement.style.display; safeZoneElement.style.display = 'none'; 
         const selCanvasEl = canvasElement.querySelector('.selected-on-canvas'); if (selCanvasEl) selCanvasEl.classList.remove('selected-on-canvas');
-        clearActiveColorInputTarget(); // Ensure no focus outline during export
+        clearActiveColorInputTarget(); 
         try {
             if(document.activeElement && typeof document.activeElement.blur === 'function')document.activeElement.blur();
             renderBrandLogoWatermark(); await new Promise(r => setTimeout(r, 150)); 
-            const cvsOut = await html2canvas(canvasElement, {backgroundColor:null,logging:false,useCORS:true, onclone:(cloneDoc)=>{
-                const clnCvs = cloneDoc.getElementById('canvasElement'); if(clnCvs)clnCvs.style.backgroundImage = canvasElement.style.backgroundImage;
-            }});
-            const dataUrl = cvsOut.toDataURL('image/png'), link = document.createElement('a');
-            link.download = `viral-creation-${Date.now()}.png`; link.href = dataUrl; link.click();
+            const canvasOutput = await html2canvas(canvasElement, {backgroundColor:null,logging:false,useCORS:true, onclone:(cloneDoc)=>{ const clnCvs = cloneDoc.getElementById('canvasElement'); if(clnCvs)clnCvs.style.backgroundImage = canvasElement.style.backgroundImage; }});
+            // --- PNG Download ---
+            const dataUrl = canvasOutput.toDataURL('image/png');
+            const link = document.createElement('a'); link.download = `viral-creation-${Date.now()}.png`; link.href = dataUrl; link.click();
+            // --- Prepare for Sharing ---
+            if ('share' in navigator && 'Blob' in window && 'File' in window) {
+                canvasOutput.toBlob(function(blob) {
+                    if (blob) {
+                         lastExportedBlob = blob; // Store blob for sharing
+                         sharePngBtn.classList.remove('hidden'); // Show share button
+                    }
+                }, 'image/png');
+            }
         } catch (err) { console.error("Export failed:", err); alert("Image export failed."); } 
         finally { safeZoneElement.style.display = origSafeDisp; if (selCanvasEl) selCanvasEl.classList.add('selected-on-canvas'); }
     }
+    async function handleShare() {
+        if (!lastExportedBlob) { alert("Please export the PNG first."); return; }
+        const fileName = `viral-creation-${Date.now()}.png`;
+        const file = new File([lastExportedBlob], fileName, { type: 'image/png' });
+        const shareData = {
+            files: [file],
+            title: 'My Viral Creation',
+            text: 'Check out what I made!',
+        };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+                console.log('Shared successfully');
+            } catch (err) {
+                console.error('Share failed:', err.name, err.message);
+                // Avoid alerting if user simply cancelled the share dialog ('AbortError')
+                if (err.name !== 'AbortError') {
+                    alert(`Could not share: ${err.message}`);
+                }
+            }
+        } else {
+            alert("Sharing this file type is not supported by your browser or OS.");
+        }
+    }
     async function initializeApp() {
         try {
-            await initDB(); 
+            [colorDB, templateDB] = await Promise.all([ // Init both DBs
+                initDB(COLOR_DB_NAME, COLOR_DB_VERSION, COLOR_STORE_NAME, 'hex'),
+                initDB(TEMPLATE_DB_NAME, TEMPLATE_DB_VERSION, TEMPLATE_STORE_NAME, 'id')
+            ]);
             loadState();
             updateGlobalControlsDisplay(); updateBrandKitDisplay(); renderAllLayersOnCanvas(); renderLayerPanel();
             updateSelectedLayerControls(); setupEventListeners(); 
-            await loadAndRenderUniversalSavedColors(); // Load saved colors after DB init
+            await Promise.all([ // Load saved items after setup
+                 loadAndRenderUniversalSavedColors(),
+                 populateTemplateSelector()
+            ]);
             if (!appState.selectedLayerId && appState.layers.length > 0) selectLayer(appState.layers[appState.layers.length - 1].id);
             else if (appState.selectedLayerId && !getSelectedLayer()) { 
                 appState.selectedLayerId = null; 
                 if (appState.layers.length > 0) selectLayer(appState.layers[appState.layers.length - 1].id); else updateSelectedLayerControls(); 
             }
-        } catch(error) {
-             console.error("Initialization failed:", error);
-             // Provide fallback or error message to user if needed
-        }
+            // Show Share button immediately if API is available
+            if ('share' in navigator && 'Blob' in window && 'File' in window) {
+                // We don't show it until after first export, but check is cheap
+                 console.log("Web Share API potentially available.");
+            }
+        } catch(error) { console.error("Initialization failed:", error); alert("Error initializing application."); }
     }
     initializeApp();
 })();
